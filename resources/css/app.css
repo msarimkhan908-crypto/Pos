@@ -1,0 +1,317 @@
+/* Bundled fonts — offline-first, no external CDN */
+@import '@fontsource/figtree/400.css';
+@import '@fontsource/figtree/500.css';
+@import '@fontsource/figtree/600.css';
+@import '@fontsource/figtree/700.css';
+@import '@fontsource/courier-prime/400.css';
+@import '@fontsource/courier-prime/700.css';
+@import '@fontsource/roboto-mono/400.css';
+@import '@fontsource/roboto-mono/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/700.css';
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
+@import '@fontsource/inconsolata/400.css';
+@import '@fontsource/inconsolata/700.css';
+@import '@fontsource/source-code-pro/400.css';
+@import '@fontsource/source-code-pro/700.css';
+@import '@fontsource/ubuntu-mono/400.css';
+@import '@fontsource/ubuntu-mono/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/700.css';
+@import '@fontsource/open-sans/400.css';
+@import '@fontsource/open-sans/700.css';
+@import '@fontsource/lato/400.css';
+@import '@fontsource/lato/700.css';
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/700.css';
+@import '@fontsource/montserrat/400.css';
+@import '@fontsource/montserrat/700.css';
+@import '@fontsource/nunito/400.css';
+@import '@fontsource/nunito/700.css';
+@import '@fontsource/rubik/400.css';
+@import '@fontsource/rubik/700.css';
+@import '@fontsource/noto-sans/400.css';
+@import '@fontsource/noto-sans/700.css';
+@import '@fontsource/oswald/400.css';
+@import '@fontsource/oswald/700.css';
+@import '@fontsource/barlow-condensed/400.css';
+@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource/roboto-condensed/400.css';
+@import '@fontsource/roboto-condensed/700.css';
+@import '@fontsource/roboto-slab/400.css';
+@import '@fontsource/roboto-slab/700.css';
+@import '@fontsource/bebas-neue/400.css';
+@import '@fontsource/noto-nastaliq-urdu/400.css';
+@import '@fontsource/noto-nastaliq-urdu/700.css';
+@import '@fontsource/noto-naskh-arabic/400.css';
+@import '@fontsource/noto-naskh-arabic/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Default brand colours (Tailwind indigo / emerald) and font families. Settings override via <x-theme />. */
+:root {
+    --app-font: Figtree, ui-sans-serif, system-ui, sans-serif;
+    --receipt-font: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    --receipt-weight: 700;
+    --kot-font: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
+    --color-primary-50: 238 242 255;
+    --color-primary-100: 224 231 255;
+    --color-primary-200: 199 210 254;
+    --color-primary-300: 165 180 252;
+    --color-primary-400: 129 140 248;
+    --color-primary-500: 99 102 241;
+    --color-primary-600: 79 70 229;
+    --color-primary-700: 67 56 202;
+    --color-primary-800: 55 48 163;
+    --color-primary-900: 49 46 129;
+    --color-primary-950: 30 27 75;
+    --color-secondary-50: 236 253 245;
+    --color-secondary-100: 209 250 229;
+    --color-secondary-200: 167 243 208;
+    --color-secondary-300: 110 231 183;
+    --color-secondary-400: 52 211 153;
+    --color-secondary-500: 16 185 129;
+    --color-secondary-600: 5 150 105;
+    --color-secondary-700: 4 120 87;
+    --color-secondary-800: 6 95 70;
+    --color-secondary-900: 6 78 59;
+    --color-secondary-950: 2 44 34;
+    --color-btn-50: 238 242 255;
+    --color-btn-100: 224 231 255;
+    --color-btn-200: 199 210 254;
+    --color-btn-300: 165 180 252;
+    --color-btn-400: 129 140 248;
+    --color-btn-500: 99 102 241;
+    --color-btn-600: 79 70 229;
+    --color-btn-700: 67 56 202;
+    --color-btn-800: 55 48 163;
+    --color-btn-900: 49 46 129;
+    --color-btn-950: 30 27 75;
+    --sidebar-bg: 255 255 255;
+    --sidebar-text: 75 85 99;
+}
+
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Dark mode */
+.dark { color-scheme: dark; }
+
+/* Override sidebar CSS variables in dark mode. html.dark (0,1,1) beats :root (0,1,0) set by <x-theme />. */
+html.dark {
+    --sidebar-bg: 17 24 39;    /* gray-900 */
+    --sidebar-text: 209 213 219; /* gray-300 */
+}
+
+/* Structural overrides: avoid touching every template by cascading from .dark */
+.dark .bg-white { background-color: rgb(31 41 55); }          /* gray-800 */
+.dark .bg-gray-50 { background-color: rgb(17 24 39); }        /* gray-900 */
+.dark .bg-gray-100 { background-color: rgb(31 41 55); }       /* gray-800 */
+.dark .text-gray-900 { color: rgb(243 244 246); }             /* gray-100 */
+.dark .text-gray-800 { color: rgb(229 231 235); }             /* gray-200 */
+.dark .text-gray-700 { color: rgb(209 213 219); }             /* gray-300 */
+.dark .text-gray-600 { color: rgb(156 163 175); }             /* gray-400 */
+.dark .text-gray-500 { color: rgb(156 163 175); }             /* gray-400 */
+.dark .border-gray-200 { border-color: rgb(55 65 81); }       /* gray-700 */
+.dark .border-gray-100 { border-color: rgb(55 65 81); }       /* gray-700 */
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81); }
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(55 65 81); }
+.dark .hover\:bg-gray-50:hover { background-color: rgb(55 65 81); }   /* gray-700 */
+.dark .hover\:bg-gray-100:hover { background-color: rgb(55 65 81); }  /* gray-700 */
+
+/* Don't apply dark overrides to print */
+@media print {
+    .dark .bg-white { background-color: #fff !important; }
+    .dark .bg-gray-50 { background-color: rgb(249 250 251) !important; }
+    .dark .text-gray-900 { color: rgb(17 24 39) !important; }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Application shell
+|--------------------------------------------------------------------------
+|
+| Mobile  (< md):  sidebar is an off-canvas drawer toggled by the hamburger.
+| Tablet  (md-lg): sidebar is a compact icon rail; the hamburger expands it
+|                  over the content.
+| Desktop (>= lg): sidebar is expanded and can be collapsed to a rail. The
+|                  collapsed state is a class on <html>, set before first
+|                  paint so there is no layout flash on page load.
+|
+*/
+
+@layer components {
+    .app-sidebar {
+        @apply fixed bottom-0 left-0 top-16 z-30 flex w-64 -translate-x-full flex-col border-r border-sidebar-text/10 bg-sidebar text-sidebar-text transition-[transform,width] duration-200 ease-in-out;
+    }
+
+    .app-sidebar.is-open {
+        @apply translate-x-0 shadow-xl;
+    }
+
+    .app-main {
+        @apply pt-16 transition-[padding] duration-200 ease-in-out;
+    }
+
+    @screen md {
+        .app-sidebar {
+            @apply w-20 translate-x-0;
+        }
+
+        .app-sidebar.is-open {
+            @apply w-64;
+        }
+
+        .app-main {
+            @apply pl-20;
+        }
+    }
+
+    @screen lg {
+        .app-sidebar,
+        .app-sidebar.is-open {
+            @apply w-64 shadow-none;
+        }
+
+        .sidebar-collapsed .app-sidebar {
+            @apply w-20;
+        }
+
+        .app-main {
+            @apply pl-64;
+        }
+
+        .sidebar-collapsed .app-main {
+            @apply pl-20;
+        }
+    }
+
+    /* Elements shown only when the sidebar is a compact icon rail, and vice versa. */
+    .app-sidebar .rail-only {
+        @apply hidden;
+    }
+
+    @media (min-width: theme('screens.md')) and (max-width: calc(theme('screens.lg') - 0.02px)) {
+        .app-sidebar:not(.is-open) .rail-hide {
+            @apply hidden;
+        }
+
+        .app-sidebar:not(.is-open) .rail-only {
+            @apply block;
+        }
+
+        .app-sidebar:not(.is-open) .rail-center {
+            @apply justify-center px-0;
+        }
+    }
+
+    @screen lg {
+        .sidebar-collapsed .app-sidebar .rail-hide {
+            @apply hidden;
+        }
+
+        .sidebar-collapsed .app-sidebar .rail-only {
+            @apply block;
+        }
+
+        .sidebar-collapsed .app-sidebar .rail-center {
+            @apply justify-center px-0;
+        }
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Printed documents (customer receipt, KOT)
+|--------------------------------------------------------------------------
+|
+| .paper is one printed slip. Width and font size come from Settings → Receipt / KOT.
+| Thermal slips (58mm / 80mm) print with no page margin; A4 uses a normal margin.
+| Named pages let one print job mix A4 and thermal slips.
+|
+*/
+
+.paper {
+    background: #fff;
+    color: #000;
+    margin: 0 auto;
+    font-family: var(--receipt-font, ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace);
+    font-weight: var(--receipt-weight, 700);
+    line-height: 1.4;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+[data-receipt-header] {
+    font-family: var(--receipt-heading-font, var(--receipt-font, ui-monospace, monospace));
+}
+
+[data-kot] {
+    font-family: var(--kot-font, ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace);
+}
+
+.paper-58mm { width: 58mm; padding: 2mm 2.5mm; }
+.paper-80mm { width: 72mm; padding: 3mm 4mm; }
+.paper-a4 { width: 190mm; max-width: 100%; padding: 10mm; font-family: Figtree, ui-sans-serif, system-ui, sans-serif; page: a4; }
+
+.paper-text-sm { font-size: 11px; }
+.paper-text-md { font-size: 12px; }
+.paper-text-lg { font-size: 14px; }
+.paper-a4.paper-text-sm { font-size: 12px; }
+.paper-a4.paper-text-md { font-size: 14px; }
+.paper-a4.paper-text-lg { font-size: 16px; }
+
+.paper .paper-sep { border-top: 1px dashed #000; margin: 0.65em 0; }
+.paper.paper-no-separators .paper-sep { border-top-color: transparent; margin: 0.35em 0; }
+.paper.paper-bordered { border: 2px solid #000; }
+.paper .paper-big { font-size: 1.35em; font-weight: 800; }
+.paper .paper-huge { font-size: 1.9em; font-weight: 900; letter-spacing: -0.01em; }
+.paper .paper-muted { color: #1f2937; }
+.paper .paper-row { display: flex; justify-content: space-between; gap: 0.5em; }
+.paper .paper-row > :last-child { text-align: right; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper td, .paper th { padding: 0.15em 0; vertical-align: top; }
+
+/* KOT layout classes */
+.paper .kot-header { margin-bottom: 0.1em; }
+.paper .kot-order-no { font-size: 1.9em; font-weight: 900; letter-spacing: -0.01em; }
+.paper .kot-item { font-size: 1em; }
+.paper.kot-items-lg .kot-item { font-size: 1.2em; }
+.paper.kot-items-xl .kot-item { font-size: 1.5em; }
+.paper .kot-addon { font-size: 0.9em; padding-left: 1em; }
+.paper .kot-note { font-size: 0.9em; padding-left: 1em; font-weight: bold; }
+.paper .kot-small { font-size: 0.85em; }
+
+/* Force max darkness and white background on actual print output */
+@media print {
+    .paper { background: #fff !important; color: #000 !important; font-weight: var(--receipt-weight, 700) !important; line-height: 1.0 !important; -webkit-font-smoothing: none !important; }
+    .paper-80mm { padding: 0.5mm 2mm 0.3mm !important; }
+    .paper-58mm { padding: 0.5mm 1.5mm 0.3mm !important; }
+    .paper .paper-muted { color: #000 !important; }
+    .paper .paper-sep { border-top-color: #000 !important; border-top-width: 1px !important; margin: 0.05em 0 !important; }
+    .paper td, .paper th { padding: 0 !important; }
+    .paper .mt-0\.5, .paper .mt-1 { margin-top: 0 !important; }
+    .paper .space-y-1 > * + *, .paper .space-y-2 > * + * { margin-top: 0.05em !important; }
+    .paper .paper-big { font-weight: 900 !important; }
+    .paper .paper-huge { font-weight: 900 !important; font-size: 1.8em !important; line-height: 1.1 !important; }
+}
+
+@page { margin: 0; }
+@page a4 { size: A4; margin: 12mm; }
+
+@media print {
+    .no-print { display: none !important; }
+    .print-sheet { box-shadow: none !important; border: 0 !important; background: none !important; padding: 0 !important; margin-left: 0 !important; }
+    .print-sheet + .print-sheet { break-before: page; page-break-before: always; }
+    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+}
