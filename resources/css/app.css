@@ -282,15 +282,15 @@ html.dark {
 .paper table { width: 100%; border-collapse: collapse; }
 .paper td, .paper th { padding: 0.15em 0; vertical-align: top; }
 
-/* KOT layout classes */
+/* KOT layout classes — items are intentionally larger than receipt for kitchen readability */
 .paper .kot-header { margin-bottom: 0.1em; }
-.paper .kot-order-no { font-size: 1.9em; font-weight: 900; letter-spacing: -0.01em; }
-.paper .kot-item { font-size: 1em; }
-.paper.kot-items-lg .kot-item { font-size: 1.2em; }
-.paper.kot-items-xl .kot-item { font-size: 1.5em; }
+.paper .kot-order-no { font-size: 2.2em; font-weight: 900; letter-spacing: -0.01em; }
+.paper .kot-item { font-size: 1.3em; }
+.paper.kot-items-lg .kot-item { font-size: 1.6em; }
+.paper.kot-items-xl .kot-item { font-size: 2em; }
 .paper .kot-addon { font-size: 0.9em; padding-left: 1em; }
-.paper .kot-note { font-size: 0.9em; padding-left: 1em; font-weight: bold; }
-.paper .kot-small { font-size: 0.85em; }
+.paper .kot-note { font-size: 0.95em; padding-left: 1em; font-weight: bold; }
+.paper .kot-small { font-size: 0.9em; }
 
 /* Force max darkness and white background on actual print output */
 @media print {
