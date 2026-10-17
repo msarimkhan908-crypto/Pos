@@ -206,7 +206,7 @@ class ProductRequest extends FormRequest
         $discountType = $this->validated('discount_type');
 
         // A blank SKU is generated on create; on update it keeps the existing SKU.
-        $fields = ['name', 'barcode', 'category_id', 'brand_id', 'kitchen_station_id', 'description', 'selling_price', 'is_active', 'is_deal', 'sort_order'];
+        $fields = ['name', 'barcode', 'category_id', 'brand_id', 'kitchen_station_id', 'description', 'selling_price', 'is_active', 'is_deal'];
 
         if (filled($this->validated('sku')) || ! $this->product()) {
             $fields[] = 'sku';
@@ -214,6 +214,7 @@ class ProductRequest extends FormRequest
 
         return [
             ...$this->safe()->only($fields),
+            'sort_order' => $this->validated('sort_order') ?? 0,
             'purchase_price' => $this->validated('purchase_price') ?? 0,
             'tax_rate' => $this->validated('tax_rate') ?? 0,
             'discount_type' => $discountType,

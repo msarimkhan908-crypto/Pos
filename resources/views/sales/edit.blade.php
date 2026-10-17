@@ -79,6 +79,12 @@
                                 this.results = (await r.json()).products ?? [];
                             } catch (e) { this.results = []; }
                         },
+                        dropdownStyle() {
+                            const inp = this.$refs.searchInput;
+                            if (!inp) return {};
+                            const rect = inp.getBoundingClientRect();
+                            return { position: 'fixed', zIndex: '9999', top: (rect.bottom + 4) + 'px', left: rect.left + 'px', width: rect.width + 'px' };
+                        },
                         add(product, variantId) {
                             const v = variantId ? (product.variants.find(x => x.id === variantId) ?? null) : null;
                             this.items.push({ key: 'new_' + (++this._k), existing_id: null, product_id: product.id, variant_id: variantId ?? null, name: product.name + (v ? ' – ' + v.name : ''), quantity: 1 });
@@ -121,46 +127,55 @@
                     <p x-show="items.length === 0" class="py-3 text-center text-sm text-gray-500">{{ __('All items removed.') }}</p>
 
                     {{-- Add product search --}}
-                    <div class="relative mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                    <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
                         <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ __('Add Product') }}</p>
                         <input type="text" x-model="search"
+                            x-ref="searchInput"
                             x-on:input.debounce.300ms="doSearch()"
                             x-on:keydown.escape="results = []; pickVariants = null"
                             placeholder="{{ __('Type product name or SKU to search…') }}"
                             autocomplete="off"
                             class="block w-full rounded-lg border-gray-300 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400">
 
-                        {{-- Search results --}}
-                        <div x-show="results.length > 0"
-                            class="absolute left-0 right-0 z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                            <template x-for="product in results.slice(0, 10)" :key="product.id">
-                                <button type="button" x-on:click="pick(product)"
-                                    class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <span class="font-medium text-gray-900 dark:text-gray-100" x-text="product.name"></span>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400"
-                                        x-text="product.variants.length ? product.variants.length + ' {{ __('options') }}' : product.price"></span>
-                                </button>
-                            </template>
-                        </div>
-
-                        {{-- Variant picker --}}
-                        <div x-show="pickVariants !== null"
-                            class="absolute left-0 right-0 z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                            <div class="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                                <button type="button" x-on:click="pickVariants = null; doSearch()"
-                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                    <x-icon name="arrow-left" class="size-4" />
-                                </button>
-                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="pickVariants?.name"></span>
+                        {{-- Search results — teleported to body so card overflow:hidden cannot clip it --}}
+                        <template x-teleport="body">
+                            <div x-show="results.length > 0"
+                                x-bind:style="dropdownStyle()"
+                                x-on:click.stop
+                                class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+                                <template x-for="product in results.slice(0, 10)" :key="product.id">
+                                    <button type="button" x-on:click="pick(product)"
+                                        class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <span class="font-medium text-gray-900 dark:text-gray-100" x-text="product.name"></span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400"
+                                            x-text="product.variants.length ? product.variants.length + ' {{ __('options') }}' : product.price"></span>
+                                    </button>
+                                </template>
                             </div>
-                            <template x-for="variant in (pickVariants?.variants ?? [])" :key="variant.id">
-                                <button type="button" x-on:click="add(pickVariants, variant.id)"
-                                    class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <span class="text-gray-900 dark:text-gray-100" x-text="variant.name"></span>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400" x-text="variant.price"></span>
-                                </button>
-                            </template>
-                        </div>
+                        </template>
+
+                        {{-- Variant picker — also teleported --}}
+                        <template x-teleport="body">
+                            <div x-show="pickVariants !== null"
+                                x-bind:style="dropdownStyle()"
+                                x-on:click.stop
+                                class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+                                <div class="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                    <button type="button" x-on:click="pickVariants = null; doSearch()"
+                                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                        <x-icon name="arrow-left" class="size-4" />
+                                    </button>
+                                    <span class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="pickVariants?.name"></span>
+                                </div>
+                                <template x-for="variant in (pickVariants?.variants ?? [])" :key="variant.id">
+                                    <button type="button" x-on:click="add(pickVariants, variant.id)"
+                                        class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <span class="text-gray-900 dark:text-gray-100" x-text="variant.name"></span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400" x-text="variant.price"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </x-ui.card>

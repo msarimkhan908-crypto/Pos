@@ -81,6 +81,9 @@ function buildPhpEnv() {
 
     // Point PHP to the bundled ini so extensions are loaded
     ...(phpDir ? { PHPRC: phpDir, PATH: `${phpDir};${process.env.PATH ?? ''}` } : {}),
+
+    // Allow the built-in server to handle concurrent requests
+    PHP_CLI_SERVER_WORKERS: '4',
   };
 
   return { ...process.env, ...extra };
@@ -100,8 +103,12 @@ function artisan(args, cwd = LARAVEL_ROOT, timeout = 120_000) {
   return spawnSync(phpBin(), ['artisan', ...args], { ...phpSpawnOpts(cwd), timeout });
 }
 
-/** Run `php -v` once so antivirus scans the binary before we rely on it. */
-function warmupPhp() {
+/**
+ * Run `php -v` on the very first launch so antivirus scans the binary.
+ * Skipped on subsequent launches to avoid the 2-3 s PHP startup penalty.
+ */
+function warmupPhp(isNewDb) {
+  if (!isNewDb) return;
   spawnSync(phpBin(), ['-v'], { ...phpSpawnOpts(LARAVEL_ROOT), timeout: 30_000 });
 }
 
@@ -226,6 +233,30 @@ function migrateOldStorage() {
 
 // ── SQLite migrations + seeding ───────────────────────────────────────────────
 
+const CACHE_VERSION_PATH = path.join(USER_DATA, 'cache-version.json');
+
+function readCachedVersion() {
+  try {
+    if (fs.existsSync(CACHE_VERSION_PATH)) {
+      return JSON.parse(fs.readFileSync(CACHE_VERSION_PATH, 'utf8')).version ?? null;
+    }
+  } catch {}
+  return null;
+}
+
+function writeCachedVersion() {
+  try {
+    fs.writeFileSync(CACHE_VERSION_PATH, JSON.stringify({ version: app.getVersion() }), 'utf8');
+  } catch {}
+}
+
+function warmCaches() {
+  artisan(['route:cache']);
+  artisan(['view:cache']);
+  artisan(['event:cache']);
+  writeCachedVersion();
+}
+
 function runMigrationsIfNeeded() {
   const isNewDb = !fs.existsSync(DB_PATH);
 
@@ -258,12 +289,14 @@ function runMigrationsIfNeeded() {
     }
 
     // Warm caches — skip config:cache so APP_KEY is always read from process env at runtime
-    artisan(['route:cache']);
-    artisan(['view:cache']);
-    artisan(['event:cache']);
+    warmCaches();
   } else {
-    // Only run migrate on existing DB — caches are already built and don't need rebuilding every launch
     artisan(['migrate', '--force']);
+    // Regenerate caches when the app version changes (new build = new routes/views)
+    if (readCachedVersion() !== app.getVersion()) {
+      console.log('[setup] New app version detected — refreshing route and view caches…');
+      warmCaches();
+    }
   }
 }
 
@@ -937,8 +970,10 @@ app.whenReady().then(async () => {
     ensureAppKey();
     patchLaravelEnv();
     patchPhpIni();
-    warmupPhp();
     migrateOldStorage();
+
+    const isNewDb = !fs.existsSync(DB_PATH);
+    warmupPhp(isNewDb);
 
     // Step 2: Migrations
     runMigrationsIfNeeded();
