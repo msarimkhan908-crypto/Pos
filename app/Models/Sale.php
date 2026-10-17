@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * A POS sale. Every column is set by App\Services\SaleService from server-side
@@ -156,6 +155,11 @@ class Sale extends Model
     public function isCompleted(): bool
     {
         return $this->status === SaleStatus::Completed;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === SaleStatus::Cancelled;
     }
 
     #[Scope]

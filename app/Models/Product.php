@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'category_id', 'brand_id', 'kitchen_station_id', 'name', 'sku', 'barcode', 'description', 'image_path',
     'purchase_price', 'selling_price', 'tax_rate', 'discount_type', 'discount_value',
-    'is_active', 'is_deal',
+    'is_active', 'is_deal', 'sort_order',
 ])]
 class Product extends Model
 {

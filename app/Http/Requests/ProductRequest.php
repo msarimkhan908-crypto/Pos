@@ -91,6 +91,7 @@ class ProductRequest extends FormRequest
             'tax_rate' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:100'],
             'discount_type' => ['nullable', Rule::enum(DiscountType::class)],
             'discount_value' => ['nullable', 'required_with:discount_type', 'numeric', 'decimal:0,2', 'min:0', 'max:'.self::MAX_PRICE],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'is_active' => ['boolean'],
             'is_deal' => ['boolean'],
             'image' => ImageUpload::rules(),
@@ -205,7 +206,7 @@ class ProductRequest extends FormRequest
         $discountType = $this->validated('discount_type');
 
         // A blank SKU is generated on create; on update it keeps the existing SKU.
-        $fields = ['name', 'barcode', 'category_id', 'brand_id', 'kitchen_station_id', 'description', 'selling_price', 'is_active', 'is_deal'];
+        $fields = ['name', 'barcode', 'category_id', 'brand_id', 'kitchen_station_id', 'description', 'selling_price', 'is_active', 'is_deal', 'sort_order'];
 
         if (filled($this->validated('sku')) || ! $this->product()) {
             $fields[] = 'sku';

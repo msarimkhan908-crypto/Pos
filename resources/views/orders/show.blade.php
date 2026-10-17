@@ -6,10 +6,25 @@
 <x-app-layout>
     <x-slot name="title">{{ $order->invoice_number }}</x-slot>
 
-    <x-ui.page-header :title="$order->invoice_number" :description="__('Completed :date at :time', ['date' => Format::date($order->completed_at), 'time' => Format::time($order->completed_at)])">
+    <x-ui.page-header
+        :title="$order->invoice_number"
+        :description="$order->isCancelled() ? __('Cancelled') : __('Completed :date at :time', ['date' => Format::date($order->completed_at), 'time' => Format::time($order->completed_at)])"
+    >
         <x-slot:actions>
             <x-ui.button :href="route('orders.index')" variant="ghost" icon="arrow-left">{{ __('Back') }}</x-ui.button>
-            <x-ui.button :href="route('sales.receipt', $order)" variant="secondary" icon="receipt" target="_blank">{{ __('Receipt') }}</x-ui.button>
+            @if ($order->isCompleted())
+                <x-ui.button :href="route('sales.receipt', $order)" variant="secondary" icon="receipt" target="_blank">{{ __('Receipt') }}</x-ui.button>
+                @can('sales.edit')
+                    <form method="POST" action="{{ route('sales.cancel', $order) }}"
+                          onsubmit="return confirm('{{ __('Cancel sale :invoice? This cannot be undone.', ['invoice' => $order->invoice_number]) }}')">
+                        @csrf
+                        <x-ui.button type="submit" variant="danger" icon="x-circle">{{ __('Cancel Sale') }}</x-ui.button>
+                    </form>
+                @endcan
+            @endif
+            @if ($order->isCancelled())
+                <x-ui.badge color="danger" dot>{{ __('Cancelled') }}</x-ui.badge>
+            @endif
         </x-slot:actions>
     </x-ui.page-header>
 

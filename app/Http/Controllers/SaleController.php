@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SaleStatus;
 use App\Http\Requests\CheckoutRequest;
 use App\Models\Sale;
 use App\Services\SaleEditService;
@@ -22,7 +23,7 @@ class SaleController extends Controller implements HasMiddleware
         return [
             new Middleware('permission:sales.create', only: ['store']),
             new Middleware('permission:sales.create|sales.view', only: ['receipt', 'print']),
-            new Middleware('permission:sales.edit', only: ['edit', 'update']),
+            new Middleware('permission:sales.edit', only: ['edit', 'update', 'cancel']),
         ];
     }
 
@@ -173,6 +174,20 @@ class SaleController extends Controller implements HasMiddleware
         }
 
         return $redirect;
+    }
+
+    /**
+     * Cancel a completed sale.
+     */
+    public function cancel(Request $request, Sale $sale): RedirectResponse
+    {
+        abort_unless($sale->isCompleted(), 403, __('Only completed sales can be cancelled.'));
+
+        $sale->status = SaleStatus::Cancelled;
+        $sale->save();
+
+        return redirect()->route('orders.show', $sale)
+            ->with('success', __('Sale :invoice has been cancelled.', ['invoice' => $sale->invoice_number]));
     }
 
     private function loadForReceipt(Sale $sale): Sale

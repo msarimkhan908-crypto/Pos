@@ -122,10 +122,11 @@
 
                     {{-- Add product search --}}
                     <div class="relative mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ __('Add Product') }}</p>
                         <input type="text" x-model="search"
                             x-on:input.debounce.300ms="doSearch()"
                             x-on:keydown.escape="results = []; pickVariants = null"
-                            placeholder="{{ __('Search to add a product…') }}"
+                            placeholder="{{ __('Type product name or SKU to search…') }}"
                             autocomplete="off"
                             class="block w-full rounded-lg border-gray-300 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400">
 

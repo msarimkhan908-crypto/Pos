@@ -68,6 +68,7 @@ class PosController extends Controller implements HasMiddleware
             ->when($category, fn (Builder $query, int $id) => $query->where('products.category_id', $id))
             ->with(CartResolver::eagerLoads())
             ->withCount('variants')
+            ->orderBy('products.sort_order')
             ->orderBy('products.name')
             ->limit(self::PAGE_SIZE + 1)
             ->get()

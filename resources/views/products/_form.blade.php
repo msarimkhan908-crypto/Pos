@@ -308,6 +308,7 @@
                 <x-ui.select name="category_id" :label="__('Category')" :options="$categoryOptions" :selected="$product->category_id" :placeholder="__('No category')" />
                 <x-ui.select name="brand_id" :label="__('Brand')" :options="$brandOptions" :selected="$product->brand_id" :placeholder="__('No brand')" />
                 <x-ui.select name="kitchen_station_id" :label="__('Kitchen station')" :options="\App\Models\KitchenStation::options()" :selected="$product->kitchen_station_id" :placeholder="__('Same as category')" :hint="__('Where this product is prepared. Without a station (here or on the category) it is not sent to the kitchen.')" />
+                <x-ui.input name="sort_order" type="number" min="0" step="1" :label="__('Sort order')" :value="old('sort_order', $product->sort_order ?? 0)" :hint="__('Lower numbers appear first on the POS screen.')" />
                 <x-ui.checkbox name="is_active" :label="__('Active')" :description="__('Inactive products are hidden from the POS.')" :checked="$product->is_active" />
                 <div>
                     <input type="hidden" name="is_deal" value="0">

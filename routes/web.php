@@ -97,6 +97,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('sales/{sale}/print', [SaleController::class, 'print'])->name('sales.print');
     Route::get('sales/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit');
     Route::patch('sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
+    Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])->name('sales.cancel');
 });
 
 // Restaurant & kitchen (Day 5). Permissions are enforced by each controller's middleware().
