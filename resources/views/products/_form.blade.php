@@ -55,7 +55,12 @@
 
     $isDeal = old('is_deal', $product->is_deal ?? false);
 
-    $dealableProducts = $dealableProducts->mapWithKeys(fn ($p) => [$p->id => $p->name]);
+    $dealableOptions  = $dealableProducts->mapWithKeys(fn ($p) => [$p->id => $p->name]);
+    $dealableProducts = $dealableProducts->map(fn ($p) => [
+        'id'       => $p->id,
+        'name'     => $p->name,
+        'variants' => $p->variants->map(fn ($v) => ['id' => $v->id, 'name' => $v->name])->values()->all(),
+    ])->values()->all();
 
     $cellInput = 'block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100';
 @endphp
@@ -74,7 +79,7 @@
         errors: @js($variantErrors),
         isDeal: @js((bool) $isDeal),
         dealItems: @js($dealItemRows),
-        dealableProducts: @js($dealableProducts),
+        dealableProducts: @js($dealableProducts), // full objects with variants for getVariants()
         addVariant() {
             this.variants.push({ id: null, name: '', sku: '', barcode: '', selling_price: '', purchase_price: '', is_active: true });
         },
@@ -84,6 +89,11 @@
             this.dealItems.push({ component_id: 0, component_name: '', variant_id: null, quantity: 1, sort_order: this.dealItems.length });
         },
         removeDealItem(index) { this.dealItems.splice(index, 1); },
+        getVariants(componentId) {
+            if (!componentId || componentId == 0) return [];
+            const p = this.dealableProducts.find(p => p.id == componentId);
+            return p ? p.variants : [];
+        },
         init() {
             this.$watch('type', (value) => {
                 if (value === 'variable' && this.variants.length === 0) {
@@ -181,45 +191,66 @@
 
                 <div class="divide-y divide-gray-100">
                     <template x-for="(row, index) in dealItems" :key="index">
-                        <div class="flex items-center gap-3 px-5 py-3">
-                            <div class="flex-1 min-w-0">
-                                <label class="mb-1 block text-xs font-medium text-gray-600" x-bind:for="`deal-component-${index}`">{{ __('Product') }} <span class="text-red-500">*</span></label>
-                                <select
-                                    x-bind:id="`deal-component-${index}`"
-                                    x-bind:name="`deal_items[${index}][component_id]`"
-                                    x-model="row.component_id"
-                                    class="{{ $cellInput }}"
-                                >
-                                    <option value="0">{{ __('Select a product…') }}</option>
-                                    @foreach ($dealableProducts as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                        <div class="px-5 py-3 space-y-2">
+                            <div class="flex items-end gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <label class="mb-1 block text-xs font-medium text-gray-600" x-bind:for="`deal-component-${index}`">{{ __('Product') }} <span class="text-red-500">*</span></label>
+                                    <select
+                                        x-bind:id="`deal-component-${index}`"
+                                        x-bind:name="`deal_items[${index}][component_id]`"
+                                        x-model="row.component_id"
+                                        x-on:change="row.variant_id = null"
+                                        class="{{ $cellInput }}"
+                                    >
+                                        <option value="0">{{ __('Select a product…') }}</option>
+                                        @foreach ($dealableOptions as $id => $name)
+                                            <option value="{{ $id }}">{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="w-20 shrink-0">
+                                    <label class="mb-1 block text-xs font-medium text-gray-600" x-bind:for="`deal-qty-${index}`">{{ __('Qty') }}</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        x-bind:id="`deal-qty-${index}`"
+                                        x-bind:name="`deal_items[${index}][quantity]`"
+                                        x-model="row.quantity"
+                                        class="{{ $cellInput }} tabular-nums"
+                                    >
+                                </div>
+                                <input type="hidden" x-bind:name="`deal_items[${index}][sort_order]`" x-bind:value="index">
+                                <div class="flex items-end pb-1 shrink-0">
+                                    <button
+                                        type="button"
+                                        x-on:click="removeDealItem(index)"
+                                        x-bind:disabled="dealItems.length === 1"
+                                        title="{{ __('Remove component') }}"
+                                        class="inline-flex size-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        <span class="sr-only">{{ __('Remove component') }}</span>
+                                        <x-icon name="trash" class="size-4" />
+                                    </button>
+                                </div>
                             </div>
-                            <div class="w-24 shrink-0">
-                                <label class="mb-1 block text-xs font-medium text-gray-600" x-bind:for="`deal-qty-${index}`">{{ __('Qty') }}</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    x-bind:id="`deal-qty-${index}`"
-                                    x-bind:name="`deal_items[${index}][quantity]`"
-                                    x-model="row.quantity"
-                                    class="{{ $cellInput }} tabular-nums"
-                                >
-                            </div>
-                            <input type="hidden" x-bind:name="`deal_items[${index}][sort_order]`" x-bind:value="index">
-                            <div class="flex items-end pb-1 shrink-0">
-                                <button
-                                    type="button"
-                                    x-on:click="removeDealItem(index)"
-                                    x-bind:disabled="dealItems.length === 1"
-                                    title="{{ __('Remove component') }}"
-                                    class="inline-flex size-9 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <span class="sr-only">{{ __('Remove component') }}</span>
-                                    <x-icon name="trash" class="size-4" />
-                                </button>
-                            </div>
+
+                            {{-- Variant picker: only shown when the selected product has variants --}}
+                            <template x-if="getVariants(row.component_id).length > 0">
+                                <div>
+                                    <label class="mb-1 block text-xs font-medium text-gray-600" x-bind:for="`deal-variant-${index}`">{{ __('Variant') }} <span class="text-red-500">*</span></label>
+                                    <select
+                                        x-bind:id="`deal-variant-${index}`"
+                                        x-bind:name="`deal_items[${index}][variant_id]`"
+                                        x-model="row.variant_id"
+                                        class="{{ $cellInput }}"
+                                    >
+                                        <option value="">{{ __('Select variant…') }}</option>
+                                        <template x-for="v in getVariants(row.component_id)" :key="v.id">
+                                            <option x-bind:value="v.id" x-text="v.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>

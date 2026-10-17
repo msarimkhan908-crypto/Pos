@@ -232,7 +232,7 @@ class ProductController extends Controller implements HasMiddleware
             'categories' => Category::query()->ordered()->get(['id', 'name', 'is_active']),
             'brands' => Brand::query()->orderBy('name')->get(['id', 'name', 'is_active']),
             'modifierGroups' => ModifierGroup::query()->ordered()->withCount('modifiers')->get(),
-            'dealableProducts' => Product::query()->active()->orderBy('name')->get(['id', 'name']),
+            'dealableProducts' => Product::query()->active()->orderBy('name')->with('variants:id,product_id,name')->get(['id', 'name']),
         ];
     }
 }
