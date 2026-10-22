@@ -54,7 +54,7 @@ RUN mkdir -p /data && \
     chown -R www-data:www-data /data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # PHP config for production
-RUN echo "opcache.enable=1\nopcache.memory_consumption=128\npost_max_size=20M\nupload_max_filesize=20M" \
+RUN printf "opcache.enable=1\nopcache.memory_consumption=128\npost_max_size=20M\nupload_max_filesize=20M\n" \
     > /usr/local/etc/php/conf.d/custom.ini
 
 EXPOSE 8080

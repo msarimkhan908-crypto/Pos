@@ -16,12 +16,15 @@ return new class extends Migration
             });
         }
 
-        // Back-fill any existing orgs
-        DB::table('organizations')->whereNull('license_key')->each(function ($org) {
-            DB::table('organizations')
-                ->where('id', $org->id)
-                ->update(['license_key' => Str::random(40)]);
-        });
+        // Back-fill any orgs that don't have a license key yet
+        DB::table('organizations')
+            ->whereNull('license_key')
+            ->orderBy('id')
+            ->each(function ($org) {
+                DB::table('organizations')
+                    ->where('id', $org->id)
+                    ->update(['license_key' => Str::random(40)]);
+            });
     }
 
     public function down(): void
