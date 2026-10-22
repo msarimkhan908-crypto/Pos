@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DiscountType;
+use App\Models\Concerns\BelongsToOrganization;
 use App\Support\CategoryIcon;
 use App\Support\ImageStorage;
 use App\Support\ItemCode;
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, SoftDeletes;
+    use BelongsToOrganization, HasFactory, SoftDeletes;
 
     protected static function booted(): void
     {

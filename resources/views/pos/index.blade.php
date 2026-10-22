@@ -722,7 +722,7 @@
                     </div>
 
                     <div class="mt-4 grid grid-cols-3 gap-2" role="radiogroup" aria-label="{{ __('Payment method') }}">
-                        @foreach (['cash' => ['Cash', 'banknote'], 'card' => ['Card', 'credit-card'], 'mixed' => ['Mixed', 'plus']] as $method => [$label, $icon])
+                        @foreach (['cash' => ['Cash', 'banknote'], 'card' => ['Card', 'credit-card'], 'easypaisa' => ['Easypaisa', 'device-mobile'], 'jazzcash' => ['JazzCash', 'device-mobile'], 'mixed' => ['Mixed', 'plus']] as $method => [$label, $icon])
                             <button type="button" role="radio" x-on:click="setMethod('{{ $method }}')"
                                 x-bind:aria-checked="pay.method === '{{ $method }}'"
                                 x-bind:class="pay.method === '{{ $method }}' ? 'bg-primary-600 text-white ring-primary-600' : 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50'"
@@ -759,6 +759,26 @@
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 py-3 text-2xl font-semibold tabular-nums dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                         </label>
                         <p class="mt-2 text-xs text-gray-500">{{ __('Charge this amount on the card terminal. No card details are stored.') }}</p>
+                    </div>
+
+                    {{-- Easypaisa --}}
+                    <div x-show="pay.method === 'easypaisa'" x-cloak class="mt-4">
+                        <label class="block">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Easypaisa amount') }}</span>
+                            <input type="number" min="0" step="0.01" inputmode="decimal" x-model="pay.card_amount" readonly
+                                class="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 py-3 text-2xl font-semibold tabular-nums dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                        </label>
+                        <p class="mt-2 text-xs text-gray-500">{{ __('Collect this amount via Easypaisa. No account details are stored.') }}</p>
+                    </div>
+
+                    {{-- JazzCash --}}
+                    <div x-show="pay.method === 'jazzcash'" x-cloak class="mt-4">
+                        <label class="block">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('JazzCash amount') }}</span>
+                            <input type="number" min="0" step="0.01" inputmode="decimal" x-model="pay.card_amount" readonly
+                                class="mt-1 block w-full rounded-lg border-gray-300 bg-gray-50 py-3 text-2xl font-semibold tabular-nums dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                        </label>
+                        <p class="mt-2 text-xs text-gray-500">{{ __('Collect this amount via JazzCash. No account details are stored.') }}</p>
                     </div>
 
                     {{-- Mixed --}}

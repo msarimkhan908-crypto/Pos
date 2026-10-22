@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RecordStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
-    use HasFactory;
+    use BelongsToOrganization, HasFactory;
 
     protected $attributes = [
         'status' => 'active',

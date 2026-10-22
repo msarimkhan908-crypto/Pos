@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\OrganizationController as AdminOrganizationController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CategoryController;
@@ -30,7 +32,22 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return auth()->check() ? redirect()->route('dashboard') : view('landing');
+})->name('home');
+
+// Subscription expired screen (authenticated but blocked)
+Route::get('/subscription/expired', fn () => view('subscription.expired'))
+    ->middleware('auth')
+    ->name('subscription.expired');
+
+// Super-admin panel (role: super-admin)
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:Super Admin'])->group(function () {
+    Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('organizations', [AdminOrganizationController::class, 'index'])->name('organizations.index');
+    Route::get('organizations/{organization}', [AdminOrganizationController::class, 'show'])->name('organizations.show');
+    Route::post('organizations/{organization}/extend', [AdminOrganizationController::class, 'extendSubscription'])->name('organizations.extend');
+    Route::post('organizations/{organization}/suspend', [AdminOrganizationController::class, 'suspend'])->name('organizations.suspend');
+    Route::post('organizations/{organization}/unsuspend', [AdminOrganizationController::class, 'unsuspend'])->name('organizations.unsuspend');
 });
 
 // Serve public-disk files without requiring a storage:link symlink.
@@ -158,6 +175,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->prefix('backup')->name('backup.')->group(function () {
     Route::get('/', [BackupController::class, 'index'])->name('index');
     Route::post('/', [BackupController::class, 'store'])->name('store');
+    Route::post('restore', [BackupController::class, 'restore'])->name('restore');
     Route::get('download/{filename}', [BackupController::class, 'download'])->name('download');
     Route::delete('{filename}', [BackupController::class, 'destroy'])->name('destroy');
 });

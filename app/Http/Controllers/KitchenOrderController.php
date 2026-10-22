@@ -86,7 +86,7 @@ class KitchenOrderController extends Controller implements HasMiddleware
     public function show(Request $request, KitchenOrder $kitchenOrder): View
     {
         $stationId = $request->integer('station') ?: null;
-        $kitchenOrder->load(['items.saleItem.modifiers', 'items.station:id,name', 'table:id,name', 'sale:id,invoice_number,customer_name,customer_phone,customer_address', 'creator:id,name']);
+        $kitchenOrder->load(['items.saleItem.modifiers', 'items.saleItem.parent', 'items.station:id,name', 'table:id,name', 'sale:id,invoice_number,customer_name,customer_phone,customer_address', 'creator:id,name']);
 
         return view('prints.kot', ['order' => $kitchenOrder, 'groups' => $kitchenOrder->itemsByStation($stationId)]);
     }

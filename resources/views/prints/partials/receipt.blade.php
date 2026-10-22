@@ -116,9 +116,15 @@
     <table>
         <tbody>
             @foreach ($topLevelItems as $item)
+                @php $isDeal = isset($componentsByParent[$item->id]) && $componentsByParent[$item->id]->count() > 0; @endphp
                 <tr>
                     <td class="pr-2">
-                        {{ $item->displayName() }}
+                        @if ($isDeal)
+                            <span class="font-bold">{{ $item->displayName() }}</span>
+                            <span class="text-[0.75em] font-bold uppercase">&nbsp;[{{ __('Deal') }}]</span>
+                        @else
+                            {{ $item->displayName() }}
+                        @endif
                         @if (($c['item_layout'] ?? 'detailed') === 'detailed')
                             <span class="block text-[0.9em] paper-muted">{{ $num($item->unit_price) }} × {{ $item->quantity }}</span>
                         @endif
@@ -131,9 +137,9 @@
                         @if (($c['show_discount'] ?? true) && (float) $item->discount > 0)
                             <span class="block text-[0.9em] paper-muted">{{ __('Discount') }} −{{ $num($item->discount) }}</span>
                         @endif
-                        {{-- Deal component lines indented under the parent --}}
+                        {{-- Deal component lines indented under the deal name --}}
                         @foreach ($componentsByParent[$item->id] ?? [] as $component)
-                            <span class="block text-[0.9em] paper-muted pl-2">- {{ $component->quantity }}× {{ $component->displayName() }}</span>
+                            <span class="block text-[0.9em] paper-muted pl-2">· {{ $component->quantity }}× {{ $component->displayName() }}</span>
                         @endforeach
                     </td>
                     <td class="text-right tabular-nums">{{ $num($item->total) }}</td>

@@ -32,6 +32,10 @@ class DashboardController extends Controller
             ? $request->integer('range')
             : 7;
 
+        $topRange = in_array($request->integer('top_range'), self::RANGES, true)
+            ? $request->integer('top_range')
+            : 1;
+
         // Parse requested date; reject future dates silently by clamping to today.
         $date = null;
         if ($request->filled('date')) {
@@ -52,7 +56,8 @@ class DashboardController extends Controller
             'salesOverview' => $on('sales_chart', 'sales.view') ? $dashboard->salesOverview($range, $date) : null,
             'recentOrders' => $on('recent_sales', 'sales.view') ? $dashboard->recentOrders() : null,
             'recentPurchases' => $on('recent_purchases', 'purchases.view') ? $dashboard->recentPurchases() : null,
-            'topProducts' => $on('top_products', 'products.view') ? $dashboard->topSellingProducts(5, $range, $date) : null,
+            'topRange' => $topRange,
+            'topProducts' => $on('top_products', 'products.view') ? $dashboard->topSellingProducts(5, $topRange, $date) : null,
             'dailyReport' => $on('daily_report', 'reports.view') ? $dashboard->dailyReport($date) : null,
         ]);
     }

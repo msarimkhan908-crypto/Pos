@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use App\Models\Concerns\HasSlug;
 use App\Support\CategoryIcon;
 use App\Support\ImageStorage;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Category extends Model
 {
     /** @use HasFactory<CategoryFactory> */
-    use HasFactory, HasSlug;
+    use BelongsToOrganization, HasFactory, HasSlug;
 
     protected function casts(): array
     {

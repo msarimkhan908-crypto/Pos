@@ -15,8 +15,12 @@
         </x-slot:actions>
     </x-ui.page-header>
 
+    @if ($errors->any())
+        <x-ui.alert type="danger" class="mb-4">{{ $errors->first() }}</x-ui.alert>
+    @endif
+
     @if (session('warning'))
-        <x-ui.alert tone="warning" class="mb-4">{{ session('warning') }}</x-ui.alert>
+        <x-ui.alert type="warning" class="mb-4">{{ session('warning') }}</x-ui.alert>
     @endif
 
     <div class="mx-auto max-w-2xl space-y-6">
@@ -60,12 +64,14 @@
                 <div
                     x-data="{
                         items: @js($sale->items->map(fn ($item) => [
-                            'key'         => 'ex_' . $item->id,
-                            'existing_id' => $item->id,
-                            'product_id'  => null,
-                            'variant_id'  => null,
-                            'name'        => $item->product_name . ($item->variant_name ? ' – ' . $item->variant_name : ''),
-                            'quantity'    => (int) $item->quantity,
+                            'key'          => 'ex_' . $item->id,
+                            'existing_id'  => $item->id,
+                            'product_id'   => null,
+                            'variant_id'   => null,
+                            'name'         => $item->product_name . ($item->variant_name ? ' – ' . $item->variant_name : ''),
+                            'quantity'     => (int) $item->quantity,
+                            'is_component' => $item->parent_sale_item_id !== null,
+                            'parent_key'   => $item->parent_sale_item_id ? 'ex_' . $item->parent_sale_item_id : null,
                         ])->values()->all()),
                         search: '',
                         results: [],
@@ -80,6 +86,7 @@
                             } catch (e) { this.results = []; }
                         },
                         dropdownStyle() {
+                            void this.results; void this.pickVariants;
                             const inp = this.$refs.searchInput;
                             if (!inp) return {};
                             const rect = inp.getBoundingClientRect();
@@ -87,7 +94,7 @@
                         },
                         add(product, variantId) {
                             const v = variantId ? (product.variants.find(x => x.id === variantId) ?? null) : null;
-                            this.items.push({ key: 'new_' + (++this._k), existing_id: null, product_id: product.id, variant_id: variantId ?? null, name: product.name + (v ? ' – ' + v.name : ''), quantity: 1 });
+                            this.items.push({ key: 'new_' + (++this._k), existing_id: null, product_id: product.id, variant_id: variantId ?? null, name: product.name + (v ? ' – ' + v.name : ''), quantity: 1, is_component: false, parent_key: null });
                             this.search = ''; this.results = []; this.pickVariants = null;
                         },
                         pick(product) {
@@ -97,15 +104,21 @@
                     }"
                     x-on:click.outside="results = []; pickVariants = null"
                 >
-                    {{-- Item rows --}}
+                    {{-- Item rows — only top-level items (components shown as sub-text, not submitted) --}}
                     <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                        <template x-for="(item, i) in items" :key="item.key">
-                            <div class="flex items-center gap-3 py-3">
+                        <template x-for="(item, i) in items.filter(c => !c.is_component)" :key="item.key">
+                            <div class="flex items-start gap-3 py-3">
                                 <input type="hidden" :name="'items['+i+'][existing_id]'" :value="item.existing_id" :disabled="!item.existing_id">
                                 <input type="hidden" :name="'items['+i+'][product_id]'"  :value="item.product_id"  :disabled="!!item.existing_id">
                                 <input type="hidden" :name="'items['+i+'][variant_id]'"  :value="item.variant_id"  :disabled="!!item.existing_id || !item.variant_id">
-                                <p class="flex-1 truncate text-sm font-medium text-gray-900 dark:text-gray-100" x-text="item.name"></p>
-                                <div class="flex items-center gap-1.5">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100" x-text="item.name"></p>
+                                    {{-- Deal components listed as read-only sub-items --}}
+                                    <template x-for="comp in items.filter(c => c.parent_key === item.key)" :key="'sub_'+comp.key">
+                                        <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500" x-text="'· ' + comp.quantity + '× ' + comp.name"></p>
+                                    </template>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-1.5">
                                     <button type="button" x-on:click="if (item.quantity > 1) item.quantity--"
                                         class="inline-flex size-7 items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700">
                                         <x-icon name="minus" class="size-3.5" />
@@ -116,7 +129,8 @@
                                         class="inline-flex size-7 items-center justify-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700">
                                         <x-icon name="plus" class="size-3.5" />
                                     </button>
-                                    <button type="button" x-on:click="items.splice(i, 1)"
+                                    <button type="button"
+                                        x-on:click="items = items.filter(c => c.key !== item.key && c.parent_key !== item.key)"
                                         class="ml-1 inline-flex size-8 items-center justify-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
                                         <x-icon name="trash" class="size-4" />
                                     </button>
@@ -124,10 +138,10 @@
                             </div>
                         </template>
                     </div>
-                    <p x-show="items.length === 0" class="py-3 text-center text-sm text-gray-500">{{ __('All items removed.') }}</p>
+                    <p x-show="!items.some(c => !c.is_component)" class="py-3 text-center text-sm text-gray-500">{{ __('All items removed.') }}</p>
 
                     {{-- Add product search --}}
-                    <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                    <div class="relative mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
                         <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ __('Add Product') }}</p>
                         <input type="text" x-model="search"
                             x-ref="searchInput"
@@ -137,45 +151,39 @@
                             autocomplete="off"
                             class="block w-full rounded-lg border-gray-300 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400">
 
-                        {{-- Search results — teleported to body so card overflow:hidden cannot clip it --}}
-                        <template x-teleport="body">
-                            <div x-show="results.length > 0"
-                                x-bind:style="dropdownStyle()"
-                                x-on:click.stop
-                                class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
-                                <template x-for="product in results.slice(0, 10)" :key="product.id">
-                                    <button type="button" x-on:click="pick(product)"
-                                        class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <span class="font-medium text-gray-900 dark:text-gray-100" x-text="product.name"></span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400"
-                                            x-text="product.variants.length ? product.variants.length + ' {{ __('options') }}' : product.price"></span>
-                                    </button>
-                                </template>
-                            </div>
-                        </template>
+                        {{-- Search results — position:fixed escapes the card's overflow:hidden --}}
+                        <div x-show="results.length > 0"
+                            x-bind:style="dropdownStyle()"
+                            class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+                            <template x-for="product in results.slice(0, 10)" :key="product.id">
+                                <button type="button" x-on:click="pick(product)"
+                                    class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <span class="font-medium text-gray-900 dark:text-gray-100" x-text="product.name"></span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400"
+                                        x-text="product.variants.length ? product.variants.length + ' {{ __('options') }}' : product.price"></span>
+                                </button>
+                            </template>
+                        </div>
 
-                        {{-- Variant picker — also teleported --}}
-                        <template x-teleport="body">
-                            <div x-show="pickVariants !== null"
-                                x-bind:style="dropdownStyle()"
-                                x-on:click.stop
-                                class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
-                                <div class="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                                    <button type="button" x-on:click="pickVariants = null; doSearch()"
-                                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                        <x-icon name="arrow-left" class="size-4" />
-                                    </button>
-                                    <span class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="pickVariants?.name"></span>
-                                </div>
-                                <template x-for="variant in (pickVariants?.variants ?? [])" :key="variant.id">
-                                    <button type="button" x-on:click="add(pickVariants, variant.id)"
-                                        class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <span class="text-gray-900 dark:text-gray-100" x-text="variant.name"></span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400" x-text="variant.price"></span>
-                                    </button>
-                                </template>
+                        {{-- Variant picker --}}
+                        <div x-show="pickVariants !== null"
+                            x-bind:style="dropdownStyle()"
+                            class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                <button type="button" x-on:click="pickVariants = null; doSearch()"
+                                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <x-icon name="arrow-left" class="size-4" />
+                                </button>
+                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-100" x-text="pickVariants?.name"></span>
                             </div>
-                        </template>
+                            <template x-for="variant in (pickVariants?.variants ?? [])" :key="variant.id">
+                                <button type="button" x-on:click="add(pickVariants, variant.id)"
+                                    class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <span class="text-gray-900 dark:text-gray-100" x-text="variant.name"></span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400" x-text="variant.price"></span>
+                                </button>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </x-ui.card>

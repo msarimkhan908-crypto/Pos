@@ -250,6 +250,10 @@ class SaleService
 
                 return ['method' => $method, 'cash_received' => null, 'change' => '0.00', 'payments' => $this->nonZero(['card' => $total])];
 
+            case PaymentMethod::Easypaisa:
+            case PaymentMethod::JazzCash:
+                return ['method' => $method, 'cash_received' => null, 'change' => '0.00', 'payments' => $this->nonZero([$method->value => $total])];
+
             default:
                 $cash = $amount('cash_amount');
                 $card = $amount('card_amount');

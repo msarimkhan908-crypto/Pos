@@ -5,14 +5,18 @@ namespace App\Services;
 use App\Enums\DiscountType;
 use App\Enums\KitchenStatus;
 use App\Enums\OrderType;
+use App\Enums\PaymentMethod;
 use App\Enums\SaleReturnStatus;
 use App\Enums\SaleStatus;
 use App\Enums\TableStatus;
 use App\Models\KitchenOrder;
+use App\Models\KitchenOrderItem;
+use App\Models\RestaurantTable;
 use App\Models\Sale;
 use App\Models\SaleEdit;
 use App\Models\SaleItem;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -53,9 +57,9 @@ class SaleEditService
      * Apply the edit inside a transaction.
      *
      * @param  array<string, mixed>  $data  Validated fields from the edit request
+     * @return array{sale: Sale, kotWarning: ?string}
      *
      * @throws ValidationException
-     * @return array{sale: Sale, kotWarning: ?string}
      */
     public function edit(Sale $sale, array $data, ?User $editor): array
     {
@@ -73,19 +77,25 @@ class SaleEditService
             $resolvedLines = $this->resolveLines($sale, $data['items'] ?? []);
 
             // Re-run the calculator with the (possibly changed) order discount.
-            $orderDiscountType  = DiscountType::tryFrom((string) ($data['order_discount_type'] ?? ''));
+            $orderDiscountType = DiscountType::tryFrom((string) ($data['order_discount_type'] ?? ''));
             $orderDiscountValue = (string) ($data['order_discount_value'] ?? '0');
             $quote = $this->calculator->calculate($resolvedLines, $orderDiscountType, $orderDiscountValue);
 
             $deliveryFee = bcadd((string) ($data['delivery_fee'] ?? '0'), '0', 2);
-            $newTotal    = bcadd($quote['total'], $deliveryFee, 2);
+            $newTotal = bcadd($quote['total'], $deliveryFee, 2);
 
-            // Re-validate payment.
-            $settled = $this->sales->settlePublic($newTotal, $data['payment'] ?? []);
+            // Keep original payment method and update amounts to the new total without re-validating.
+            // The original cash collected is a historical fact; we update the payment record to match.
+            $method = $sale->payment_method ?? PaymentMethod::Cash;
+            $settled = match (true) {
+                $method === PaymentMethod::Card || $method->isWallet() => ['method' => $method, 'cash_received' => null, 'change' => '0.00', 'payments' => [$method->value => $newTotal]],
+                $method === PaymentMethod::Mixed => ['method' => $method, 'cash_received' => $newTotal, 'change' => '0.00', 'payments' => ['cash' => $newTotal]],
+                default => ['method' => $method, 'cash_received' => $newTotal, 'change' => '0.00', 'payments' => ['cash' => $newTotal]],
+            };
 
             // Determine new order type / table.
             $orderType = OrderType::tryFrom((string) ($data['order_type'] ?? $sale->order_type->value)) ?? $sale->order_type;
-            $tableId   = $orderType === OrderType::DineIn ? ($data['table_id'] ?? $sale->table_id) : null;
+            $tableId = $orderType === OrderType::DineIn ? ($data['table_id'] ?? $sale->table_id) : null;
 
             // Check KOT statuses now, before items are deleted (cascade delete wipes KOT items).
             [$kotWarning, $kotsToRebuild] = $this->checkKots($sale);
@@ -96,32 +106,32 @@ class SaleEditService
             $kotItemsToRestore = null;
             if ($kotWarning !== null) {
                 $kotItemsToRestore = $this->snapshotKotItems($sale);
-                \App\Models\KitchenOrderItem::query()
+                KitchenOrderItem::query()
                     ->whereHas('kitchenOrder', fn ($q) => $q->where('sale_id', $sale->id))
                     ->delete();
             }
 
             // Update the sale row.
             $sale->forceFill([
-                'customer_name'        => $data['customer_name'] ?? $sale->customer_name,
-                'customer_phone'       => $data['customer_phone'] ?? $sale->customer_phone,
-                'customer_address'     => $data['customer_address'] ?? $sale->customer_address,
-                'notes'                => $data['notes'] ?? $sale->notes,
-                'order_type'           => $orderType,
-                'table_id'             => $tableId,
-                'delivery_fee'         => $deliveryFee,
-                'subtotal'             => $quote['subtotal'],
-                'item_discount'        => $quote['item_discount'],
-                'order_discount_type'  => $orderDiscountType,
+                'customer_name' => $data['customer_name'] ?? $sale->customer_name,
+                'customer_phone' => $data['customer_phone'] ?? $sale->customer_phone,
+                'customer_address' => $data['customer_address'] ?? $sale->customer_address,
+                'notes' => $data['notes'] ?? $sale->notes,
+                'order_type' => $orderType,
+                'table_id' => $tableId,
+                'delivery_fee' => $deliveryFee,
+                'subtotal' => $quote['subtotal'],
+                'item_discount' => $quote['item_discount'],
+                'order_discount_type' => $orderDiscountType,
                 'order_discount_value' => $orderDiscountType ? bcadd($orderDiscountValue, '0', 2) : '0.00',
-                'order_discount'       => $quote['order_discount'],
-                'discount'             => $quote['discount'],
-                'tax'                  => $quote['tax'],
-                'total'                => $newTotal,
-                'payment_method'       => $settled['method'],
-                'cash_received'        => $settled['cash_received'],
-                'change_amount'        => $settled['change'],
-                'edit_version'         => $sale->edit_version + 1,
+                'order_discount' => $quote['order_discount'],
+                'discount' => $quote['discount'],
+                'tax' => $quote['tax'],
+                'total' => $newTotal,
+                'payment_method' => $settled['method'],
+                'cash_received' => $settled['cash_received'],
+                'change_amount' => $settled['change'],
+                'edit_version' => $sale->edit_version + 1,
             ])->save();
 
             // Replace sale items.
@@ -130,22 +140,22 @@ class SaleEditService
             $savedItems = [];
             foreach ($quote['lines'] as $line) {
                 $item = $sale->items()->forceCreate([
-                    'product_id'     => $line['product_id'],
-                    'variant_id'     => $line['variant_id'],
-                    'product_name'   => $line['product_name'],
-                    'variant_name'   => $line['variant_name'],
-                    'sku'            => $line['sku'],
-                    'note'           => $line['note'] ?? null,
-                    'quantity'       => $line['quantity'],
-                    'unit_price'     => $line['unit_price'],
-                    'modifiers_total'=> $line['modifiers_total'],
-                    'discount_type'  => $line['discount'] !== '0.00' ? $line['discount_type'] : null,
+                    'product_id' => $line['product_id'],
+                    'variant_id' => $line['variant_id'],
+                    'product_name' => $line['product_name'],
+                    'variant_name' => $line['variant_name'],
+                    'sku' => $line['sku'],
+                    'note' => $line['note'] ?? null,
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $line['unit_price'],
+                    'modifiers_total' => $line['modifiers_total'],
+                    'discount_type' => $line['discount'] !== '0.00' ? $line['discount_type'] : null,
                     'discount_value' => $line['discount'] !== '0.00' ? bcadd($line['discount_value'], '0', 2) : '0.00',
-                    'discount'       => $line['discount'],
+                    'discount' => $line['discount'],
                     'order_discount' => $line['order_discount'],
-                    'tax_rate'       => $line['tax_rate'],
-                    'tax'            => $line['tax'],
-                    'total'          => $line['total'],
+                    'tax_rate' => $line['tax_rate'],
+                    'tax' => $line['tax'],
+                    'total' => $line['total'],
                 ]);
 
                 foreach ($line['modifiers'] as $modifier) {
@@ -178,9 +188,9 @@ class SaleEditService
             SaleEdit::forceCreate([
                 'sale_id' => $sale->id,
                 'user_id' => $editor?->getKey(),
-                'reason'  => $data['reason'],
-                'before'  => $before,
-                'after'   => $this->snapshot($sale->fresh()),
+                'reason' => $data['reason'],
+                'before' => $before,
+                'after' => $this->snapshot($sale->fresh()),
             ]);
 
             $sale->refresh();
@@ -210,28 +220,28 @@ class SaleEditService
 
                 // Build a synthetic line using the snapshot price and tax rate.
                 $quantity = max(1, (int) ($item['quantity'] ?? $orig->quantity));
-                $discountType  = DiscountType::tryFrom((string) ($item['discount_type'] ?? $orig->discount_type?->value ?? ''));
+                $discountType = DiscountType::tryFrom((string) ($item['discount_type'] ?? $orig->discount_type?->value ?? ''));
                 $discountValue = (string) ($item['discount_value'] ?? $orig->discount_value ?? '0');
 
                 $lines[] = [
-                    'product_id'       => $orig->product_id,
-                    'variant_id'       => $orig->variant_id,
-                    'product_name'     => $orig->product_name,
-                    'variant_name'     => $orig->variant_name,
-                    'sku'              => $orig->sku,
-                    'note'             => $item['note'] ?? $orig->note,
-                    'unit_price'       => (string) $orig->unit_price,
-                    'modifiers_total'  => (string) $orig->modifiers_total,
-                    'quantity'         => $quantity,
-                    'discount_type'    => $discountType,
-                    'discount_value'   => $discountValue,
-                    'tax_rate'         => (string) $orig->tax_rate,
+                    'product_id' => $orig->product_id,
+                    'variant_id' => $orig->variant_id,
+                    'product_name' => $orig->product_name,
+                    'variant_name' => $orig->variant_name,
+                    'sku' => $orig->sku,
+                    'note' => $item['note'] ?? $orig->note,
+                    'unit_price' => (string) $orig->unit_price,
+                    'modifiers_total' => (string) $orig->modifiers_total,
+                    'quantity' => $quantity,
+                    'discount_type' => $discountType,
+                    'discount_value' => $discountValue,
+                    'tax_rate' => (string) $orig->tax_rate,
                     'kitchen_station_id' => null, // resolved later if needed
-                    'modifiers'        => $orig->modifiers->map(fn ($m) => [
+                    'modifiers' => $orig->modifiers->map(fn ($m) => [
                         'modifier_id' => $m->modifier_id,
-                        'group_name'  => $m->group_name,
-                        'name'        => $m->name,
-                        'price'       => (string) $m->price,
+                        'group_name' => $m->group_name,
+                        'name' => $m->name,
+                        'price' => (string) $m->price,
                     ])->all(),
                 ];
             } else {
@@ -251,14 +261,14 @@ class SaleEditService
      */
     private function syncTable(Sale $sale, array $before, OrderType $newOrderType, ?int $newTableId): void
     {
-        $oldType    = $before['order_type'] ?? null;
+        $oldType = $before['order_type'] ?? null;
         $oldTableId = $before['table_id'] ?? null;
 
         // Release old table if it changed.
         if ($oldType === OrderType::DineIn->value && $oldTableId && $oldTableId !== $newTableId) {
             $openKots = KitchenOrder::query()->open()->where('table_id', $oldTableId)->exists();
             if (! $openKots) {
-                \App\Models\RestaurantTable::query()
+                RestaurantTable::query()
                     ->whereKey($oldTableId)
                     ->where('status', TableStatus::Occupied)
                     ->update(['status' => TableStatus::Available, 'updated_at' => now()]);
@@ -267,7 +277,7 @@ class SaleEditService
 
         // Occupy new table.
         if ($newOrderType === OrderType::DineIn && $newTableId) {
-            \App\Models\RestaurantTable::query()
+            RestaurantTable::query()
                 ->whereKey($newTableId)
                 ->where('status', TableStatus::Available)
                 ->update(['status' => TableStatus::Occupied, 'updated_at' => now()]);
@@ -281,7 +291,7 @@ class SaleEditService
      * uses cascadeOnDelete, which would erase all KOT items when sale items are deleted,
      * making the status check impossible afterwards.
      *
-     * @return array{0: ?string, 1: \Illuminate\Support\Collection<int, KitchenOrder>}
+     * @return array{0: ?string, 1: Collection<int, KitchenOrder>}
      */
     private function checkKots(Sale $sale): array
     {
@@ -309,22 +319,22 @@ class SaleEditService
      * Rebuild KOT items after the sale items have been replaced.
      * KOT items were already cascade-deleted when sale items were removed.
      *
-     * @param  \Illuminate\Support\Collection<int, KitchenOrder>  $kots
+     * @param  Collection<int, KitchenOrder>  $kots
      * @param  list<SaleItem>  $newItems
      */
-    private function rebuildKots(\Illuminate\Support\Collection $kots, array $newItems): void
+    private function rebuildKots(Collection $kots, array $newItems): void
     {
         foreach ($kots as $kot) {
             foreach ($newItems as $saleItem) {
                 if ($saleItem->product->kitchen_station_id) {
                     $kot->items()->forceCreate([
-                        'sale_item_id'       => $saleItem->id,
-                        'product_id'         => $saleItem->product_id,
-                        'variant_id'         => $saleItem->variant_id,
+                        'sale_item_id' => $saleItem->id,
+                        'product_id' => $saleItem->product_id,
+                        'variant_id' => $saleItem->variant_id,
                         'kitchen_station_id' => $saleItem->product->kitchen_station_id,
-                        'quantity'           => $saleItem->quantity,
-                        'notes'              => $saleItem->note,
-                        'status'             => KitchenStatus::Pending,
+                        'quantity' => $saleItem->quantity,
+                        'notes' => $saleItem->note,
+                        'status' => KitchenStatus::Pending,
                     ]);
                 }
             }
@@ -339,19 +349,19 @@ class SaleEditService
      */
     private function snapshotKotItems(Sale $sale): array
     {
-        return \App\Models\KitchenOrderItem::query()
+        return KitchenOrderItem::query()
             ->whereHas('kitchenOrder', fn ($q) => $q->where('sale_id', $sale->id))
             ->get()
             ->map(fn ($item) => [
-                'kitchen_order_id'   => $item->kitchen_order_id,
-                'product_id'         => $item->product_id,
-                'variant_id'         => $item->variant_id,
+                'kitchen_order_id' => $item->kitchen_order_id,
+                'product_id' => $item->product_id,
+                'variant_id' => $item->variant_id,
                 'kitchen_station_id' => $item->kitchen_station_id,
-                'quantity'           => $item->quantity,
-                'notes'              => $item->notes,
-                'status'             => $item->status,
-                'created_at'         => $item->created_at,
-                'updated_at'         => $item->updated_at,
+                'quantity' => $item->quantity,
+                'notes' => $item->notes,
+                'status' => $item->status,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
             ])
             ->all();
     }
@@ -367,12 +377,12 @@ class SaleEditService
         // Build a lookup: [product_id:variant_id => new SaleItem]
         $lookup = [];
         foreach ($newItems as $item) {
-            $key = $item->product_id . ':' . ($item->variant_id ?? '');
+            $key = $item->product_id.':'.($item->variant_id ?? '');
             $lookup[$key] = $item;
         }
 
         foreach ($snapshot as $row) {
-            $key = $row['product_id'] . ':' . ($row['variant_id'] ?? '');
+            $key = $row['product_id'].':'.($row['variant_id'] ?? '');
             $newSaleItemId = $lookup[$key]?->id ?? null;
 
             if ($newSaleItemId === null) {
@@ -380,15 +390,15 @@ class SaleEditService
                 continue;
             }
 
-            \App\Models\KitchenOrderItem::forceCreate([
-                'kitchen_order_id'   => $row['kitchen_order_id'],
-                'sale_item_id'       => $newSaleItemId,
-                'product_id'         => $row['product_id'],
-                'variant_id'         => $row['variant_id'],
+            KitchenOrderItem::forceCreate([
+                'kitchen_order_id' => $row['kitchen_order_id'],
+                'sale_item_id' => $newSaleItemId,
+                'product_id' => $row['product_id'],
+                'variant_id' => $row['variant_id'],
                 'kitchen_station_id' => $row['kitchen_station_id'],
-                'quantity'           => $row['quantity'],
-                'notes'              => $row['notes'],
-                'status'             => $row['status'],
+                'quantity' => $row['quantity'],
+                'notes' => $row['notes'],
+                'status' => $row['status'],
             ]);
         }
     }
@@ -401,18 +411,18 @@ class SaleEditService
     private function snapshot(Sale $sale): array
     {
         return [
-            'customer_name'       => $sale->customer_name,
-            'customer_phone'      => $sale->customer_phone,
-            'customer_address'    => $sale->customer_address,
-            'notes'               => $sale->notes,
-            'order_type'          => $sale->order_type?->value,
-            'table_id'            => $sale->table_id,
-            'delivery_fee'        => (string) $sale->delivery_fee,
-            'subtotal'            => (string) $sale->subtotal,
-            'discount'            => (string) $sale->discount,
-            'tax'                 => (string) $sale->tax,
-            'total'               => (string) $sale->total,
-            'payment_method'      => $sale->payment_method?->value,
+            'customer_name' => $sale->customer_name,
+            'customer_phone' => $sale->customer_phone,
+            'customer_address' => $sale->customer_address,
+            'notes' => $sale->notes,
+            'order_type' => $sale->order_type?->value,
+            'table_id' => $sale->table_id,
+            'delivery_fee' => (string) $sale->delivery_fee,
+            'subtotal' => (string) $sale->subtotal,
+            'discount' => (string) $sale->discount,
+            'tax' => (string) $sale->tax,
+            'total' => (string) $sale->total,
+            'payment_method' => $sale->payment_method?->value,
         ];
     }
 }

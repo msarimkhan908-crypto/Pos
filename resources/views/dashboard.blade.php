@@ -157,7 +157,22 @@
 
             {{-- Top selling products --}}
             @if ($topProducts)
-                <x-ui.card :title="__('Top Selling Products')" :description="$range === 1 ? ($date->isToday() ? __('Today') : $date->isoFormat('D MMM YYYY')) : __('Last :days days', ['days' => $range])" :padding="false">
+                <x-ui.card :title="__('Top Selling Products')" :padding="false">
+                    <x-slot:actions>
+                        <div class="inline-flex rounded-lg bg-gray-100 p-0.5 text-xs font-medium dark:bg-gray-700" role="group">
+                            @foreach ($ranges as $option)
+                                <a
+                                    href="{{ route('dashboard', array_merge(request()->query(), ['top_range' => $option])) }}"
+                                    @if ($option === $topRange) aria-current="true" @endif
+                                    @class([
+                                        'rounded-md px-2.5 py-1 transition',
+                                        'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white' => $option === $topRange,
+                                        'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' => $option !== $topRange,
+                                    ])
+                                >{{ $option === 1 ? __('Today') : __(':days days', ['days' => $option]) }}</a>
+                            @endforeach
+                        </div>
+                    </x-slot:actions>
                     @forelse ($topProducts as $index => $product)
                         <div class="flex items-center gap-3 border-b border-gray-100 px-5 py-3 last:border-b-0">
                             <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600">{{ $index + 1 }}</span>

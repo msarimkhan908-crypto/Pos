@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use App\Models\Concerns\HasSlug;
 use App\Support\ImageStorage;
 use Database\Factories\BrandFactory;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Brand extends Model
 {
     /** @use HasFactory<BrandFactory> */
-    use HasFactory, HasSlug;
+    use BelongsToOrganization, HasFactory, HasSlug;
 
     protected function casts(): array
     {

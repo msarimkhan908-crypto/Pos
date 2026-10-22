@@ -4,12 +4,15 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ZipArchive;
 
 class BackupCreate extends Command
 {
     protected $signature = 'backup:create';
 
-    protected $description = 'Copy the SQLite database to the local backup folder';
+    protected $description = 'Create a ZIP backup of the database and uploaded files';
 
     public function handle(): int
     {
@@ -24,23 +27,39 @@ class BackupCreate extends Command
         $dir = storage_path('app/backups');
         File::ensureDirectoryExists($dir);
 
-        $filename = 'pos-backup-'.now()->format('Y-m-d_His').'.sqlite';
+        $filename = 'pos-backup-'.now()->format('Y-m-d_His').'.zip';
         $dest = $dir.DIRECTORY_SEPARATOR.$filename;
 
-        if (! copy($source, $dest)) {
-            $this->error('Failed to copy database file.');
+        $zip = new ZipArchive;
+        if ($zip->open($dest, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            $this->error('Failed to create backup ZIP.');
 
             return self::FAILURE;
         }
 
+        $zip->addFile($source, 'database.sqlite');
+
+        $uploadsDir = storage_path('app/public');
+        if (is_dir($uploadsDir)) {
+            $files = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($uploadsDir, RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+            foreach ($files as $file) {
+                $relPath = 'uploads/'.str_replace('\\', '/', substr($file->getPathname(), strlen($uploadsDir) + 1));
+                $zip->addFile($file->getPathname(), $relPath);
+            }
+        }
+
+        $zip->close();
+
         // Keep only the 30 most recent backups.
-        $files = collect(File::files($dir))
+        collect(File::files($dir))
+            ->filter(fn ($f) => str_ends_with($f->getFilename(), '.zip'))
             ->sortByDesc(fn ($f) => $f->getMTime())
-            ->values();
+            ->values()
+            ->slice(30)
+            ->each(fn ($f) => File::delete($f->getPathname()));
 
-        $files->slice(30)->each(fn ($f) => File::delete($f->getPathname()));
-
-        // Record the last backup time.
         file_put_contents(
             storage_path('app/last_backup.json'),
             json_encode(['backed_up_at' => now()->toIso8601String(), 'file' => $filename])

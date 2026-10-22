@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Database\Factories\ModifierGroupFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ModifierGroup extends Model
 {
     /** @use HasFactory<ModifierGroupFactory> */
-    use HasFactory;
+    use BelongsToOrganization, HasFactory;
 
     protected function casts(): array
     {

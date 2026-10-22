@@ -7,6 +7,7 @@ use App\Enums\OrderType;
 use App\Enums\PaymentMethod;
 use App\Enums\SaleReturnStatus;
 use App\Enums\SaleStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,8 @@ class Sale extends Model
     public const INVOICE_PREFIX = 'INV-';
 
     public const INVOICE_SEQUENCE = 'invoice';
+
+    use BelongsToOrganization;
 
     protected $guarded = ['*'];
 

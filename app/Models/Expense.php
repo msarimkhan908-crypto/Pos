@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MoneyMethod;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['category_id', 'amount', 'expense_date', 'payment_method', 'description', 'reference'])]
 class Expense extends Model
 {
-    use HasFactory;
+    use BelongsToOrganization, HasFactory;
 
     public const NUMBER_PREFIX = 'EXP-';
 

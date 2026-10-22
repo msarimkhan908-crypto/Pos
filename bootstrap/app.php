@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ApplySettings;
+use App\Http\Middleware\SetOrganization;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,7 +18,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [ApplySettings::class]);
+        $middleware->trustProxies(at: '*');
+
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(function () {
+            return auth()->user()?->hasRole('Super Admin')
+                ? route('admin.dashboard')
+                : route('dashboard');
+        });
+
+        $middleware->web(append: [ApplySettings::class, SetOrganization::class]);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

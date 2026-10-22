@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\KitchenStatus;
 use App\Enums\OrderType;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class KitchenOrder extends Model
 {
     public const NUMBER_PREFIX = 'KOT-';
+
+    use BelongsToOrganization;
 
     protected $guarded = ['*'];
 

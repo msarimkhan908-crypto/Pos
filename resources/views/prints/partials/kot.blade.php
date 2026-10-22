@@ -70,17 +70,32 @@
         @if ($c['show_station_headings'] ?? true)
             <p class="kot-small font-bold uppercase tracking-widest">{{ $station }}</p>
         @endif
+        @php
+            // For deals: only print the deal name once per parent SaleItem (skip component lines).
+            $shownDealParents = [];
+        @endphp
         <ul class="mt-1 space-y-1">
             @foreach ($items as $item)
-                <li class="kot-item">
-                    <p class="font-bold leading-tight">{{ $item->quantity }} x {{ $item->saleItem->product_name }}@if ($item->saleItem->variant_name) ({{ $item->saleItem->variant_name }})@endif</p>
-                    @foreach ($item->saleItem->modifiers as $modifier)
-                        <p class="kot-addon">+ {{ $modifier->name }}</p>
-                    @endforeach
-                    @if ($showNotes && $item->notes)
-                        <p class="kot-note">» {{ $item->notes }}</p>
-                    @endif
-                </li>
+                @php $parentId = $item->saleItem?->parent_sale_item_id; @endphp
+                @if ($parentId !== null && ! in_array($parentId, $shownDealParents))
+                    @php $shownDealParents[] = $parentId; @endphp
+                    {{-- Deal: print only the deal name with quantity — components are not listed on KOT --}}
+                    <li class="kot-item">
+                        <p class="font-bold leading-tight">{{ $item->saleItem->parent?->quantity ?? $item->quantity }} x {{ $item->saleItem->parent?->product_name ?? __('Deal') }}</p>
+                    </li>
+                @elseif ($parentId === null)
+                    {{-- Regular (non-deal) item --}}
+                    <li class="kot-item">
+                        <p class="font-bold leading-tight">{{ $item->quantity }} x {{ $item->saleItem->product_name }}@if ($item->saleItem->variant_name) ({{ $item->saleItem->variant_name }})@endif</p>
+                        @foreach ($item->saleItem->modifiers as $modifier)
+                            <p class="kot-addon">+ {{ $modifier->name }}</p>
+                        @endforeach
+                        @if ($showNotes && $item->notes)
+                            <p class="kot-note">» {{ $item->notes }}</p>
+                        @endif
+                    </li>
+                @endif
+                {{-- Remaining components of the same deal are silently skipped --}}
             @endforeach
         </ul>
     @endforeach

@@ -845,9 +845,10 @@ Alpine.data('pos', ({ urls, currency, currencySymbol = '', hideTrailingZeros = t
         },
 
         setMethod(method) {
+            const isWallet = method === 'easypaisa' || method === 'jazzcash';
             this.pay.method = method;
             this.pay.errors = {};
-            this.pay.card_amount = method === 'card' ? this.quote.total : '';
+            this.pay.card_amount = (method === 'card' || isWallet) ? this.quote.total : '';
             this.pay.cash_amount = '';
             this.$nextTick(() => (method === 'cash' ? this.$refs.cashReceived : method === 'mixed' ? this.$refs.cashAmount : null)?.focus());
         },
@@ -902,7 +903,7 @@ Alpine.data('pos', ({ urls, currency, currencySymbol = '', hideTrailingZeros = t
                 payment_method: this.pay.method,
                 cash_received: this.pay.method === 'cash' ? this.pay.cash_received : null,
                 cash_amount: this.pay.method === 'mixed' ? this.pay.cash_amount : null,
-                card_amount: this.pay.method === 'cash' ? null : this.pay.card_amount,
+                card_amount: this.pay.method === 'card' ? this.pay.card_amount : (this.pay.method === 'mixed' ? this.pay.card_amount : null),
             }).catch(() => ({ ok: false, status: 0, data: {} }));
 
             this.pay.submitting = false;
