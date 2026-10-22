@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SahulatPOS — Activate Free Trial</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --primary: #4f46e5;
+    --primary-h: #4338ca;
+    --text: #1e1b4b;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --success-bg: #ecfdf5;
+    --success-text: #065f46;
+    --error-bg: #fef2f2;
+    --error-text: #991b1b;
+    --input-bg: #f9fafb;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-app-region: no-drag;
+  }
+
+  /* Drag region at top */
+  .drag-bar {
+    -webkit-app-region: drag;
+    height: 32px;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+
+  .drag-bar span {
+    -webkit-app-region: no-drag;
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+
+  .hero {
+    background: var(--primary);
+    color: white;
+    padding: 28px 32px 24px;
+    text-align: center;
+  }
+
+  .hero .logo {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .hero .tagline {
+    font-size: 13px;
+    opacity: 0.8;
+  }
+
+  .trial-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 99px;
+    padding: 5px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 14px;
+  }
+
+  .trial-badge .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #34d399;
+    display: inline-block;
+  }
+
+  .content {
+    flex: 1;
+    padding: 24px 28px 28px;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 5px;
+  }
+
+  label .req { color: #ef4444; }
+
+  input {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus { border-color: var(--primary); }
+  input::placeholder { color: #9ca3af; }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.15s, opacity 0.15s;
+  }
+
+  .btn:hover:not(:disabled) { background: var(--primary-h); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+    display: none;
+  }
+
+  .alert.success { background: var(--success-bg); color: var(--success-text); display: block; }
+  .alert.error   { background: var(--error-bg);   color: var(--error-text);   display: block; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .feat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .feat .icon { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<div class="drag-bar">
+  <span>SahulatPOS — Free Trial Activation</span>
+</div>
+
+<div class="page">
+  <div class="hero">
+    <div class="logo">SahulatPOS</div>
+    <div class="tagline">Complete Point of Sale for your business</div>
+    <div class="trial-badge">
+      <span class="dot"></span>
+      14-Day Free Trial — No payment required
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="features">
+      <div class="feat"><span class="icon">📦</span>Products &amp; inventory</div>
+      <div class="feat"><span class="icon">🧾</span>Sales &amp; receipts</div>
+      <div class="feat"><span class="icon">☁️</span>Cloud data backup</div>
+      <div class="feat"><span class="icon">🖨️</span>Thermal printing</div>
+    </div>
+
+    <p class="section-title">Create your account</p>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="regForm" autocomplete="off">
+      <div class="form-group">
+        <label>Business Name <span class="req">*</span></label>
+        <input type="text" id="businessName" placeholder="e.g. Khan General Store" required>
+      </div>
+      <div class="form-group">
+        <label>Your Name <span class="req">*</span></label>
+        <input type="text" id="ownerName" placeholder="e.g. Muhammad Sarim" required>
+      </div>
+      <div class="form-group">
+        <label>Email Address <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="e.g. sarim@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Phone (optional)</label>
+        <input type="tel" id="phone" placeholder="e.g. 0312-3456789">
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">
+        <span class="spinner" id="spinner"></span>
+        Start 14-Day Free Trial
+      </button>
+    </form>
+
+    <p class="note">
+      Your data is saved on this PC. Use the Sync button anytime<br>
+      to back up to the cloud.
+    </p>
+
+  </div>
+</div>
+
+<script>
+const SAAS_URL = 'https://sahulatpos.fly.dev';
+
+function showAlert(type, msg) {
+  const el = document.getElementById('alert');
+  el.className = 'alert ' + type;
+  el.textContent = msg;
+}
+
+document.getElementById('regForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const btn = document.getElementById('submitBtn');
+  const spinner = document.getElementById('spinner');
+
+  const businessName = document.getElementById('businessName').value.trim();
+  const ownerName    = document.getElementById('ownerName').value.trim();
+  const email        = document.getElementById('email').value.trim();
+  const phone        = document.getElementById('phone').value.trim();
+
+  if (!businessName || !ownerName || !email) {
+    showAlert('error', 'Please fill in all required fields.');
+    return;
+  }
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+
+  try {
+    const res = await fetch(`${SAAS_URL}/api/license/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        business_name: businessName,
+        owner_name:    ownerName,
+        email,
+        phone: phone || null,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const msg = data.errors
+        ? Object.values(data.errors).flat().join(' ')
+        : (data.message || 'Registration failed. Please try again.');
+      showAlert('error', msg);
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      return;
+    }
+
+    showAlert('success', `✓ Trial started! ${data.days_remaining} days remaining. Loading your POS...`);
+
+    // Tell Electron main process to save the license key and continue
+    await window.electronAPI.saveLicense({
+      license_key:    data.license_key,
+      business_name:  businessName,
+      owner_name:     ownerName,
+      email,
+      trial_ends_at:  data.trial_ends_at,
+      status:         'trial',
+    });
+
+  } catch (err) {
+    showAlert('error', 'Could not connect to server. Please check your internet connection and try again.');
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>

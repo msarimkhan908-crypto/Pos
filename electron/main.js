@@ -19,9 +19,11 @@ const CREDS_PATH  = path.join(USER_DATA, 'first_run_credentials.json');
 const KEY_PATH    = path.join(USER_DATA, 'app-key.json');
 
 // Derived paths inside userData/storage (matches Laravel's expected layout)
-const STORAGE     = path.join(USER_DATA, 'storage');
-const BOOT_CACHE  = path.join(USER_DATA, 'bootstrap-cache');
-const UPLOADS_TMP = path.join(USER_DATA, 'uploads-tmp');
+const STORAGE      = path.join(USER_DATA, 'storage');
+const BOOT_CACHE   = path.join(USER_DATA, 'bootstrap-cache');
+const UPLOADS_TMP  = path.join(USER_DATA, 'uploads-tmp');
+const LICENSE_PATH = path.join(USER_DATA, 'license.json');
+const SAAS_URL     = 'https://sahulatpos.fly.dev';
 
 let phpProcess = null;
 let mainWindow = null;
@@ -313,6 +315,142 @@ function triggerSync() {
     });
   });
 }
+
+// ── License / trial system ───────────────────────────────────────────────────
+
+function readLicense() {
+  try {
+    if (!fs.existsSync(LICENSE_PATH)) return null;
+    return JSON.parse(fs.readFileSync(LICENSE_PATH, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function saveLicense(data) {
+  try {
+    fs.writeFileSync(LICENSE_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch {}
+}
+
+/** Hit the SaaS license API. Returns { status, days_remaining, message } or { status: 'offline' }. */
+function fetchLicenseStatus(key) {
+  return new Promise((resolve) => {
+    const https   = require('https');
+    const url     = `${SAAS_URL}/api/license/status?key=${encodeURIComponent(key)}`;
+    const timer   = setTimeout(() => resolve({ status: 'offline' }), 8000);
+
+    const req = https.get(url, { headers: { Accept: 'application/json' } }, (res) => {
+      clearTimeout(timer);
+      let body = '';
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(body)); }
+        catch { resolve({ status: 'offline' }); }
+      });
+    });
+
+    req.on('error', () => { clearTimeout(timer); resolve({ status: 'offline' }); });
+    req.end();
+  });
+}
+
+// One-time resolver set while a register/expired window is waiting
+let licenseResolver = null;
+
+function createRegisterWindow() {
+  const win = new BrowserWindow({
+    width: 480, height: 660, frame: false, resizable: false, center: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false, contextIsolation: true,
+    },
+    title: 'SahulatPOS — Activate Trial', show: false,
+  });
+  win.loadFile(path.join(__dirname, 'register.html'));
+  win.once('ready-to-show', () => win.show());
+  return win;
+}
+
+function createExpiredWindow() {
+  const win = new BrowserWindow({
+    width: 480, height: 720, frame: false, resizable: false, center: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false, contextIsolation: true,
+    },
+    title: 'SahulatPOS — Subscription Expired', show: false,
+  });
+  win.loadFile(path.join(__dirname, 'expired.html'));
+  win.once('ready-to-show', () => win.show());
+  return win;
+}
+
+/**
+ * Ensures a valid license before the POS starts.
+ * Returns true if the app may proceed, false if the user quit the dialog.
+ */
+async function ensureLicenseValid() {
+  const license = readLicense();
+
+  // No license: show registration
+  if (!license || !license.license_key) {
+    return new Promise((resolve) => {
+      licenseResolver = resolve;
+      const win = createRegisterWindow();
+      win.on('closed', () => {
+        if (licenseResolver) { licenseResolver(false); licenseResolver = null; }
+      });
+    });
+  }
+
+  // License found: check online
+  const status = await fetchLicenseStatus(license.license_key);
+
+  // Offline / network issue — allow app to open (grace period)
+  if (status.status === 'offline') return true;
+
+  // Active trial or paid subscription
+  if (status.status === 'trial' || status.status === 'active') return true;
+
+  // Expired or suspended — show payment screen
+  return new Promise((resolve) => {
+    licenseResolver = resolve;
+    const win = createExpiredWindow();
+    win.on('closed', () => {
+      if (licenseResolver) { licenseResolver(false); licenseResolver = null; }
+    });
+  });
+}
+
+// IPC handlers for register / expired windows
+ipcMain.handle('license-save', (event, data) => {
+  saveLicense(data);
+  if (licenseResolver) { licenseResolver(true); licenseResolver = null; }
+});
+
+ipcMain.handle('license-check-online', async () => {
+  const license = readLicense();
+  if (!license?.license_key) return { active: false, message: 'No license found.' };
+
+  const status = await fetchLicenseStatus(license.license_key);
+  const isActive = status.status === 'trial' || status.status === 'active';
+
+  if (isActive && licenseResolver) {
+    licenseResolver(true);
+    licenseResolver = null;
+  }
+
+  return { active: isActive, message: status.message ?? '' };
+});
+
+ipcMain.handle('license-quit', () => app.quit());
+
+ipcMain.handle('license-open-whatsapp', () => {
+  shell.openExternal('https://wa.me/923279754246');
+});
+
+ipcMain.handle('license-get-info', () => readLicense() ?? {});
 
 // ── Startup self-check ────────────────────────────────────────────────────────
 
@@ -972,25 +1110,29 @@ app.whenReady().then(async () => {
     patchPhpIni();
     migrateOldStorage();
 
+    // Step 2: License check — show register or expired screen if needed
+    const licensed = await ensureLicenseValid();
+    if (!licensed) { loadingWin.destroy(); app.quit(); return; }
+
     const isNewDb = !fs.existsSync(DB_PATH);
     warmupPhp(isNewDb);
 
-    // Step 2: Migrations
+    // Step 3: Migrations
     runMigrationsIfNeeded();
 
-    // Step 3: Start PHP server
+    // Step 4: Start PHP server
     serverPort = await findFreePort(8765);
     phpProcess = startPhpServer(serverPort);
 
     const url = `http://127.0.0.1:${serverPort}`;
     await waitForServer(url, phpProcess);
 
-    // Step 4: Create window first (needed to query printers)
+    // Step 5: Create window first (needed to query printers)
     createWindow(url);
     loadingWin.destroy();
     createTray();
 
-    // Step 5: Show first-run credentials
+    // Step 6: Show first-run credentials
     if (fs.existsSync(CREDS_PATH)) {
       try {
         const creds = JSON.parse(fs.readFileSync(CREDS_PATH, 'utf8'));
@@ -1004,7 +1146,7 @@ app.whenReady().then(async () => {
       } catch {}
     }
 
-    // Step 6: Startup checks (non-blocking — results shown in Diagnostics)
+    // Step 7: Startup checks (non-blocking — results shown in Diagnostics)
     runStartupChecks().then((result) => {
       const critical = result.critical_failures ?? [];
       const mustFix  = critical.filter(n => ['storage_writable', 'sqlite_writable', 'ext_pdo_sqlite'].includes(n));

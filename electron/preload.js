@@ -1,5 +1,15 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// License / trial windows (register.html, expired.html)
+contextBridge.exposeInMainWorld('electronAPI', {
+  saveLicense:   (data) => ipcRenderer.invoke('license-save', data),
+  checkLicense:  ()     => ipcRenderer.invoke('license-check-online'),
+  quitApp:       ()     => ipcRenderer.invoke('license-quit'),
+  openWhatsApp:  ()     => ipcRenderer.invoke('license-open-whatsapp'),
+  getLicenseInfo: ()    => ipcRenderer.invoke('license-get-info'),
+});
+
+
 contextBridge.exposeInMainWorld('desktop', {
     isDesktop: true,
 

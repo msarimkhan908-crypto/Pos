@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SahulatPOS — Subscription Expired</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fef2f2;
+    --card: #ffffff;
+    --primary: #4f46e5;
+    --primary-h: #4338ca;
+    --text: #1e1b4b;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --green: #059669;
+    --green-light: #ecfdf5;
+    --monthly-border: #6366f1;
+    --annual-border: #f59e0b;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-app-region: no-drag;
+  }
+
+  .drag-bar {
+    -webkit-app-region: drag;
+    height: 32px;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+
+  .drag-bar span {
+    -webkit-app-region: no-drag;
+    color: rgba(255,255,255,0.85);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  .page {
+    height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding: 0 0 32px;
+  }
+
+  /* Alert banner */
+  .banner {
+    background: var(--red);
+    color: white;
+    text-align: center;
+    padding: 22px 24px;
+  }
+
+  .banner .icon { font-size: 36px; }
+
+  .banner h1 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 8px 0 4px;
+  }
+
+  .banner p {
+    font-size: 13px;
+    opacity: 0.85;
+    max-width: 320px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .content {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 24px 0;
+  }
+
+  /* Plans */
+  .plans-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .plans {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .plan {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 14px;
+    text-align: center;
+    position: relative;
+  }
+
+  .plan.monthly { border-color: var(--monthly-border); }
+  .plan.annual  { border-color: var(--annual-border); }
+
+  .plan .badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--annual-border);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+
+  .plan .plan-name {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .plan .plan-price {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .plan .plan-currency {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .plan .plan-period {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Easypaisa payment card */
+  .pay-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .pay-card-header {
+    background: #1c7a37;
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pay-card-header .ep-logo {
+    font-size: 22px;
+  }
+
+  .pay-card-header h2 {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .pay-card-header p {
+    font-size: 11px;
+    opacity: 0.85;
+    margin-top: 1px;
+  }
+
+  .pay-detail {
+    padding: 16px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-row:last-child { border-bottom: none; }
+
+  .detail-row .label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .detail-row .value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .detail-row .value.phone {
+    font-size: 18px;
+    color: #1c7a37;
+    letter-spacing: 0.05em;
+  }
+
+  /* Steps */
+  .steps-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .steps {
+    list-style: none;
+    counter-reset: step;
+    margin-bottom: 18px;
+  }
+
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    min-width: 20px;
+    height: 20px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Actions */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .btn {
+    padding: 11px 10px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+    text-align: center;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-outline  {
+    background: white;
+    color: var(--text);
+    border: 1.5px solid var(--border);
+  }
+
+  .btn-check {
+    grid-column: 1 / -1;
+    background: var(--green);
+    color: white;
+    padding: 13px;
+    font-size: 14px;
+  }
+
+  .status-msg {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    text-align: center;
+    display: none;
+  }
+
+  .status-msg.checking { background: #eff6ff; color: #1d4ed8; display: block; }
+  .status-msg.ok       { background: var(--green-light); color: #065f46; display: block; }
+  .status-msg.fail     { background: var(--red-light); color: var(--red); display: block; }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(29,78,216,0.3);
+    border-top-color: #1d4ed8;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="drag-bar">
+  <span>SahulatPOS — Subscription Expired</span>
+</div>
+
+<div class="page">
+
+  <div class="banner">
+    <div class="icon">🔒</div>
+    <h1>Your Trial Has Ended</h1>
+    <p>Choose a plan and send payment via Easypaisa to continue using SahulatPOS.</p>
+  </div>
+
+  <div class="content">
+
+    <p class="plans-title">Choose Your Plan</p>
+
+    <div class="plans">
+      <div class="plan monthly">
+        <div class="plan-name">Monthly</div>
+        <div class="plan-price">
+          <span class="plan-currency">PKR </span>2,499
+        </div>
+        <div class="plan-period">per month</div>
+      </div>
+      <div class="plan annual">
+        <div class="badge">Save 17%</div>
+        <div class="plan-name">Annual</div>
+        <div class="plan-price">
+          <span class="plan-currency">PKR </span>24,990
+        </div>
+        <div class="plan-period">per year</div>
+      </div>
+    </div>
+
+    <!-- Easypaisa details -->
+    <div class="pay-card">
+      <div class="pay-card-header">
+        <span class="ep-logo">💚</span>
+        <div>
+          <h2>Pay via Easypaisa</h2>
+          <p>Send payment to the number below</p>
+        </div>
+      </div>
+      <div class="pay-detail">
+        <div class="detail-row">
+          <span class="label">Easypaisa Number</span>
+          <span class="value phone">0327-9754246</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Account Name</span>
+          <span class="value">Muhammad Sarim Khan</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Reference</span>
+          <span class="value" id="refText">SahulatPOS</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <p class="steps-title">How to activate:</p>
+    <ol class="steps">
+      <li>Choose Monthly (PKR 2,499) or Annual (PKR 24,990) plan above.</li>
+      <li>Send payment to <strong>0327-9754246</strong> via Easypaisa.</li>
+      <li>Screenshot your payment and WhatsApp it to <strong>0327-9754246</strong>.</li>
+      <li>Your account will be activated within a few hours.</li>
+      <li>Click <strong>"I've Paid — Check Now"</strong> below to verify and unlock the app.</li>
+    </ol>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-check" id="checkBtn" onclick="checkLicense()">
+        ✓ I've Paid — Check Now
+      </button>
+      <button class="btn btn-outline" onclick="window.electronAPI.quitApp()">
+        Exit App
+      </button>
+      <button class="btn btn-primary" onclick="window.electronAPI.openWhatsApp()">
+        WhatsApp Support
+      </button>
+    </div>
+
+    <div id="statusMsg" class="status-msg"></div>
+
+  </div>
+</div>
+
+<script>
+// Load saved license info for reference field
+window.addEventListener('load', async () => {
+  try {
+    const info = await window.electronAPI.getLicenseInfo();
+    if (info?.business_name) {
+      document.getElementById('refText').textContent = info.business_name;
+    }
+  } catch {}
+});
+
+async function checkLicense() {
+  const btn = document.getElementById('checkBtn');
+  const msg = document.getElementById('statusMsg');
+
+  btn.disabled = true;
+  msg.className = 'status-msg checking';
+  msg.innerHTML = '<span class="spinner"></span>Checking your payment status...';
+
+  try {
+    const result = await window.electronAPI.checkLicense();
+
+    if (result.active) {
+      msg.className = 'status-msg ok';
+      msg.textContent = '✓ Payment confirmed! Loading your POS...';
+    } else {
+      msg.className = 'status-msg fail';
+      msg.textContent = result.message || 'Payment not yet confirmed. Please try again in a few minutes.';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    msg.className = 'status-msg fail';
+    msg.textContent = 'Could not connect to server. Check your internet and try again.';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
