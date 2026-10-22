@@ -10,9 +10,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('organizations', function (Blueprint $table) {
-            $table->string('license_key', 64)->unique()->nullable()->after('slug');
-        });
+        if (! Schema::hasColumn('organizations', 'license_key')) {
+            Schema::table('organizations', function (Blueprint $table) {
+                $table->string('license_key', 64)->unique()->nullable()->after('slug');
+            });
+        }
 
         // Back-fill any existing orgs
         DB::table('organizations')->whereNull('license_key')->each(function ($org) {
