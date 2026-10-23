@@ -45,6 +45,15 @@ Route::get('/payment/pending', fn () => view('subscription.payment-pending'))
     ->middleware('auth')
     ->name('payment.pending');
 
+// Polled by the pending page JS to detect when admin activates the account
+Route::get('/account/status', function () {
+    $org = auth()->user()?->organization;
+    return response()->json([
+        'status'   => $org?->status,
+        'is_active' => $org?->isActive() ?? false,
+    ]);
+})->middleware('auth')->name('account.status');
+
 // Super-admin panel (role: super-admin)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
