@@ -557,9 +557,9 @@
 
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 1.5rem;
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -1024,11 +1024,11 @@
             <p class="section-sub" style="margin:0 auto;">Start free. Upgrade when you're ready. No hidden fees.</p>
         </div>
 
-        <div class="pricing-grid fade-in">
+        <div class="pricing-grid fade-in" style="max-width:1100px;">
             <div class="pricing-card">
-                <div class="pricing-name">Trial</div>
+                <div class="pricing-name">Free Trial</div>
                 <div class="pricing-price" style="color:#f1f5f9;">Free</div>
-                <div class="pricing-period">14 days, no credit card</div>
+                <div class="pricing-period">14 days · no credit card needed</div>
                 <ul class="pricing-features">
                     <li>Unlimited sales</li>
                     <li>Up to 100 products</li>
@@ -1043,9 +1043,9 @@
 
             <div class="pricing-card featured">
                 <div class="pricing-popular">Most Popular</div>
-                <div class="pricing-name">Pro</div>
+                <div class="pricing-name">Monthly</div>
                 <div class="pricing-price" style="background:linear-gradient(135deg,#4ade80,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-                    PKR 1,999
+                    PKR 2,499
                 </div>
                 <div class="pricing-period">per month</div>
                 <ul class="pricing-features">
@@ -1058,6 +1058,24 @@
                 </ul>
                 @if (Route::has('register'))
                     <a href="{{ route('register') }}" class="btn-plan btn-plan-green">Get Started</a>
+                @endif
+            </div>
+
+            <div class="pricing-card" style="border-color:rgba(14,165,233,0.25);">
+                <div class="pricing-popular" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">Best Value</div>
+                <div class="pricing-name">Annual</div>
+                <div class="pricing-price" style="color:#f1f5f9;">PKR 14,999</div>
+                <div class="pricing-period">per year · <span style="color:#4ade80;font-weight:600;">save PKR 14,989</span></div>
+                <ul class="pricing-features">
+                    <li>Everything in Monthly</li>
+                    <li>2 months free</li>
+                    <li>Unlimited user accounts</li>
+                    <li>Priority onboarding</li>
+                    <li>Dedicated support</li>
+                    <li>Early access to new features</li>
+                </ul>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" class="btn-plan btn-plan-outline" style="border-color:rgba(14,165,233,0.4);color:#7dd3fc;">Get Annual Plan</a>
                 @endif
             </div>
         </div>
