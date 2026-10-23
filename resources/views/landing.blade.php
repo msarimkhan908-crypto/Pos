@@ -1036,9 +1036,7 @@
                     <li>Basic reports</li>
                     <li>Receipt printing</li>
                 </ul>
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="btn-plan btn-plan-outline">Start Free Trial</a>
-                @endif
+                <a href="{{ route('register') }}" class="btn-plan btn-plan-outline">Start Free Trial</a>
             </div>
 
             <div class="pricing-card featured">
@@ -1056,9 +1054,7 @@
                     <li>Desktop + Web app</li>
                     <li>Priority support</li>
                 </ul>
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="btn-plan btn-plan-green">Get Started</a>
-                @endif
+                <a href="{{ route('register') }}" class="btn-plan btn-plan-green">Get Started</a>
             </div>
 
             <div class="pricing-card" style="border-color:rgba(14,165,233,0.25);">
@@ -1074,9 +1070,7 @@
                     <li>Dedicated support</li>
                     <li>Early access to new features</li>
                 </ul>
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="btn-plan btn-plan-outline" style="border-color:rgba(14,165,233,0.4);color:#7dd3fc;">Get Annual Plan</a>
-                @endif
+                <a href="{{ route('register') }}" class="btn-plan btn-plan-outline" style="border-color:rgba(14,165,233,0.4);color:#7dd3fc;">Get Annual Plan</a>
             </div>
         </div>
     </div>
