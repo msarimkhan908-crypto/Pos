@@ -19,26 +19,37 @@ class Sidebar extends Component
 
     public function __construct(Request $request)
     {
-        $this->sections = self::visibleSections(config('navigation.sidebar', []), $request->user(), $request);
+        $org = $request->user()?->organization;
+        $this->sections = self::visibleSections(config('navigation.sidebar', []), $request->user(), $request, $org?->isRestaurant() ?? false);
     }
 
     /**
-     * Filter navigation by permission and resolve link state for each item.
+     * Filter navigation by permission and business type, then resolve link state.
      *
      * @param  array<int, array<string, mixed>>  $sections
      * @return list<array{heading: ?string, items: list<array<string, mixed>>}>
      */
-    public static function visibleSections(array $sections, ?User $user, Request $request): array
+    public static function visibleSections(array $sections, ?User $user, Request $request, bool $isRestaurant = false): array
     {
         $resolved = [];
 
         foreach ($sections as $section) {
+            // Hide the whole Restaurant section for non-restaurant businesses
+            if (($section['restaurant_only'] ?? false) && ! $isRestaurant) {
+                continue;
+            }
+
             $items = [];
 
             foreach ($section['items'] ?? [] as $item) {
                 $permission = $item['permission'] ?? null;
 
                 if ($permission && ! $user?->can($permission)) {
+                    continue;
+                }
+
+                // Hide restaurant-only items for non-restaurant businesses
+                if (($item['restaurant_only'] ?? false) && ! $isRestaurant) {
                     continue;
                 }
 

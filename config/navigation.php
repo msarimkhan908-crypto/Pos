@@ -41,7 +41,7 @@ return [
                 ['label' => 'Products', 'route' => 'products.index', 'active' => 'products.*', 'icon' => 'products', 'permission' => 'products.view'],
                 ['label' => 'Categories', 'route' => 'categories.index', 'active' => 'categories.*', 'icon' => 'categories', 'permission' => 'categories.view'],
                 ['label' => 'Brands', 'route' => 'brands.index', 'active' => 'brands.*', 'icon' => 'brands', 'permission' => 'brands.view'],
-                ['label' => 'Modifiers', 'route' => 'modifier-groups.index', 'active' => 'modifier-groups.*', 'icon' => 'modifiers', 'permission' => 'products.view'],
+                ['label' => 'Modifiers', 'route' => 'modifier-groups.index', 'active' => 'modifier-groups.*', 'icon' => 'modifiers', 'permission' => 'products.view', 'restaurant_only' => true],
             ],
         ],
         [
@@ -53,9 +53,10 @@ return [
         ],
         [
             'heading' => 'Restaurant',
+            'restaurant_only' => true,
             'items' => [
-                ['label' => 'Tables', 'route' => 'restaurant.tables.index', 'active' => 'restaurant.tables.*', 'icon' => 'table', 'permission' => 'tables.view'],
-                ['label' => 'Kitchen Orders', 'route' => 'kitchen.index', 'active' => ['kitchen.index', 'kitchen.orders*'], 'icon' => 'kitchen', 'permission' => 'kitchen.view'],
+                ['label' => 'Tables', 'route' => 'restaurant.tables.index', 'active' => 'restaurant.tables.*', 'icon' => 'table', 'permission' => 'tables.view', 'restaurant_only' => true],
+                ['label' => 'Kitchen Orders', 'route' => 'kitchen.index', 'active' => ['kitchen.index', 'kitchen.orders*'], 'icon' => 'kitchen', 'permission' => 'kitchen.view', 'restaurant_only' => true],
             ],
         ],
         [
@@ -79,7 +80,7 @@ return [
                 ['label' => 'POS Settings', 'route' => 'settings.pos', 'active' => 'settings.pos*', 'icon' => 'pos-settings', 'permission' => 'settings.view'],
                 ['label' => 'Receipt Settings', 'route' => 'settings.receipt', 'active' => ['settings.receipt', 'settings.kot'], 'icon' => 'receipt', 'permission' => 'settings.view'],
                 ['label' => 'Tax Settings', 'route' => 'settings.tax', 'active' => 'settings.tax*', 'icon' => 'tax', 'permission' => 'settings.view'],
-                ['label' => 'Kitchen Stations', 'route' => 'kitchen.stations.index', 'active' => 'kitchen.stations.*', 'icon' => 'kitchen', 'permission' => 'settings.view'],
+                ['label' => 'Kitchen Stations', 'route' => 'kitchen.stations.index', 'active' => 'kitchen.stations.*', 'icon' => 'kitchen', 'permission' => 'settings.view', 'restaurant_only' => true],
                 ['label' => 'Backup & Data', 'route' => 'backup.index', 'active' => 'backup.*', 'icon' => 'download', 'permission' => 'settings.manage'],
             ],
         ],

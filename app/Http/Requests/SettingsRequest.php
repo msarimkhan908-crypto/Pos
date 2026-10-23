@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Organization;
 use App\Rules\ImageUpload;
 use App\Settings\SettingDefinitions;
 use App\Support\FontRegistry;
@@ -73,6 +74,7 @@ class SettingsRequest extends FormRequest
         return match ($this->section()) {
             'business' => [
                 'name' => ['required', 'string', 'max:150'],
+                'business_type' => ['required', Rule::in(array_keys(Organization::BUSINESS_TYPES))],
                 'address' => ['nullable', 'string', 'max:500'],
                 'phone' => ['nullable', 'string', 'regex:'.SupplierRequest::PHONE_PATTERN],
                 'email' => ['nullable', 'email', 'max:150'],

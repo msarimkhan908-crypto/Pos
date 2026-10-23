@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SettingsRequest;
 use App\Settings\SettingDefinitions;
-use Illuminate\Validation\Rule;
 use App\Support\Printing;
 use App\Support\ReceiptSample;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -59,6 +59,12 @@ class SettingsController extends Controller implements HasMiddleware
     {
         settings()->set($request->settingsValues());
 
+        if ($section === 'business' && $request->has('business_type')) {
+            $request->user()->organization->update([
+                'business_type' => $request->validated('business_type'),
+            ]);
+        }
+
         return redirect()->route("settings.{$section}")->with('success', __(':section settings saved.', ['section' => __(self::SECTIONS[$section][1])]));
     }
 
@@ -97,7 +103,7 @@ class SettingsController extends Controller implements HasMiddleware
             if ($request->hasFile('header_image') && $request->file('header_image')->isValid()) {
                 $file = $request->file('header_image');
                 $mime = $file->getMimeType() ?? 'image/jpeg';
-                $image = 'data:' . $mime . ';base64,' . base64_encode((string) $file->get());
+                $image = 'data:'.$mime.';base64,'.base64_encode((string) $file->get());
             } elseif ($request->boolean('remove_header_image')) {
                 $image = settings()->business()['logo_url'];
             }
@@ -116,6 +122,7 @@ class SettingsController extends Controller implements HasMiddleware
                 'sample' => true,
                 ...Printing::receipt(),
             ])->render();
+
             return response()->json(['html' => $html]);
         }
     }

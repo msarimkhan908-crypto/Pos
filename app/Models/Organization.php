@@ -8,9 +8,21 @@ use Illuminate\Support\Str;
 
 class Organization extends Model
 {
+    public const BUSINESS_TYPES = [
+        'general' => 'General / Retail',
+        'pharmacy' => 'Pharmacy',
+        'grocery' => 'Grocery Store',
+        'clothing' => 'Clothing Store',
+        'electronics' => 'Electronics Shop',
+        'restaurant' => 'Restaurant',
+        'cafe' => 'Café / Coffee Shop',
+        'other' => 'Other',
+    ];
+
     protected $fillable = [
         'name',
         'slug',
+        'business_type',
         'license_key',
         'phone',
         'address',
@@ -21,6 +33,11 @@ class Organization extends Model
         'status',
         'notes',
     ];
+
+    public function isRestaurant(): bool
+    {
+        return in_array($this->business_type, ['restaurant', 'cafe'], true);
+    }
 
     protected static function booted(): void
     {
