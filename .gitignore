@@ -5,6 +5,7 @@
 # Electron build output & binaries
 /dist/
 /dist_new/
+/dist_sahulatpos/
 /electron/node_modules/
 /electron/dist/
 /electron/.webpack/
