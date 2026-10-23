@@ -19,9 +19,13 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        $plan = in_array($request->query('plan'), ['trial', 'monthly', 'annual'], true)
+            ? $request->query('plan')
+            : 'trial';
+
+        return view('auth.register', compact('plan'));
     }
 
     /**
@@ -31,15 +35,28 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $plan = in_array($request->input('plan'), ['trial', 'monthly', 'annual'], true)
+            ? $request->input('plan')
+            : 'trial';
+
+        $isPaidPlan = in_array($plan, ['monthly', 'annual'], true);
+
+        $rules = [
             'business_name' => ['required', 'string', 'max:150'],
             'business_type' => ['required', Rule::in(array_keys(Organization::BUSINESS_TYPES))],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+            'plan' => ['required', 'in:trial,monthly,annual'],
+        ];
 
-        DB::transaction(function () use ($request): void {
+        if ($isPaidPlan) {
+            $rules['payment_proof'] = ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'];
+        }
+
+        $request->validate($rules);
+
+        DB::transaction(function () use ($request, $plan, $isPaidPlan): void {
             $slug = Str::slug($request->business_name);
             $baseSlug = $slug;
             $i = 1;
@@ -48,13 +65,20 @@ class RegisteredUserController extends Controller
                 $slug = $baseSlug.'-'.$i++;
             }
 
+            $proofPath = null;
+            if ($isPaidPlan && $request->hasFile('payment_proof')) {
+                $proofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+            }
+
             $organization = Organization::create([
                 'name' => $request->business_name,
                 'slug' => $slug,
                 'business_type' => $request->business_type,
                 'plan' => 'trial',
-                'status' => 'trial',
-                'trial_ends_at' => now()->addDays(14),
+                'pending_plan' => $isPaidPlan ? $plan : null,
+                'status' => $isPaidPlan ? 'payment_submitted' : 'trial',
+                'trial_ends_at' => $isPaidPlan ? null : now()->addDays(14),
+                'payment_proof_path' => $proofPath,
             ]);
 
             $user = User::create([

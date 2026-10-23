@@ -32,11 +32,18 @@ class Organization extends Model
         'subscribed_until',
         'status',
         'notes',
+        'payment_proof_path',
+        'pending_plan',
     ];
 
     public function isRestaurant(): bool
     {
         return in_array($this->business_type, ['restaurant', 'cafe'], true);
+    }
+
+    public function hasPendingPayment(): bool
+    {
+        return $this->status === 'payment_submitted';
     }
 
     protected static function booted(): void

@@ -26,14 +26,19 @@
                     <td class="px-6 py-4">
                         @php
                             $badge = match($org->status) {
-                                'active'    => 'bg-green-100 text-green-800',
-                                'trial'     => 'bg-blue-100 text-blue-800',
-                                'suspended' => 'bg-red-100 text-red-800',
-                                default     => 'bg-gray-100 text-gray-700',
+                                'active'            => 'bg-green-100 text-green-800',
+                                'trial'             => 'bg-blue-100 text-blue-800',
+                                'payment_submitted' => 'bg-amber-100 text-amber-800',
+                                'suspended'         => 'bg-red-100 text-red-800',
+                                default             => 'bg-gray-100 text-gray-700',
+                            };
+                            $statusLabel = match($org->status) {
+                                'payment_submitted' => '⚠ Payment Pending',
+                                default             => ucfirst($org->status),
                             };
                         @endphp
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $badge }}">
-                            {{ ucfirst($org->status) }}
+                            {{ $statusLabel }}
                         </span>
                     </td>
                     <td class="px-6 py-4 text-gray-600">
