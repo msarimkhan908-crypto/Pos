@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\BarcodeLookupController;
 use App\Http\Controllers\Api\LicenseController;
 use App\Http\Controllers\SyncController;
 use App\Http\Middleware\SyncTokenMiddleware;
 use Illuminate\Support\Facades\Route;
+
+// Barcode product lookup — requires authenticated session
+Route::middleware('auth')->get('barcode-lookup', BarcodeLookupController::class)->name('api.barcode-lookup');
 
 // Desktop license API — open, no auth required
 Route::prefix('license')->group(function () {

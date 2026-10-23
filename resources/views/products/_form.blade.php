@@ -79,7 +79,37 @@
         errors: @js($variantErrors),
         isDeal: @js((bool) $isDeal),
         dealItems: @js($dealItemRows),
-        dealableProducts: @js($dealableProducts), // full objects with variants for getVariants()
+        dealableProducts: @js($dealableProducts),
+        barcodeStatus: null, // null | 'loading' | 'found' | 'notfound' | 'error'
+        barcodeMsg: '',
+        async lookupBarcode(code) {
+            if (!code || code.length < 4) { this.barcodeStatus = null; return; }
+            this.barcodeStatus = 'loading';
+            this.barcodeMsg = '';
+            try {
+                const res = await fetch(`{{ route('api.barcode-lookup') }}?code=${encodeURIComponent(code)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.found) {
+                    this.barcodeStatus = 'found';
+                    this.barcodeMsg = data.name;
+                    // Fill name field only if it is empty
+                    const nameEl = document.getElementById('product-name');
+                    if (nameEl && !nameEl.value) nameEl.value = data.name;
+                    // Fill brand select if a brand name returned
+                    if (data.brand) {
+                        this.barcodeMsg += ` · ${data.brand}`;
+                    }
+                } else {
+                    this.barcodeStatus = 'notfound';
+                    this.barcodeMsg = @js(__('Not found in database — enter details manually.'));
+                }
+            } catch {
+                this.barcodeStatus = 'error';
+                this.barcodeMsg = @js(__('Lookup failed. Check your connection.'));
+            }
+        },
         addVariant() {
             this.variants.push({ id: null, name: '', sku: '', barcode: '', selling_price: '', purchase_price: '', is_active: true });
         },
@@ -147,10 +177,78 @@
 
         <x-ui.card :title="__('Basic information')">
             <div class="space-y-5">
-                <x-ui.input name="name" :label="__('Product name')" :value="$product->name" required maxlength="150" autofocus />
+                <x-ui.input id="product-name" name="name" :label="__('Product name')" :value="$product->name" required maxlength="150" autofocus />
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <x-ui.input name="sku" :label="__('SKU')" :value="$product->sku" maxlength="64" :hint="$product->exists ? __('Unique stock-keeping code.') : __('Leave blank to generate one.')" />
-                    <x-ui.input name="barcode" :label="__('Barcode')" :value="$product->barcode" maxlength="64" :hint="__('Optional. Must be unique if set.')" />
+
+                    {{-- Barcode field with scan-to-lookup --}}
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ __('Barcode') }}
+                        </label>
+                        <div class="flex gap-2">
+                            <input
+                                type="text"
+                                id="barcode-input"
+                                name="barcode"
+                                value="{{ old('barcode', $product->barcode) }}"
+                                maxlength="64"
+                                placeholder="{{ __('Scan or type barcode…') }}"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                x-on:change.debounce.600ms="lookupBarcode($event.target.value)"
+                                x-on:keydown.enter.prevent="lookupBarcode($el.value)"
+                            >
+                            <button
+                                type="button"
+                                title="{{ __('Lookup barcode') }}"
+                                x-on:click="lookupBarcode(document.getElementById('barcode-input').value)"
+                                class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 18h.75v.75h-.75v-.75ZM18 13.5h.75v.75H18v-.75ZM18 18h.75v.75H18v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+                                </svg>
+                                <span class="hidden sm:inline">{{ __('Lookup') }}</span>
+                            </button>
+                        </div>
+
+                        {{-- Lookup status feedback --}}
+                        <div x-show="barcodeStatus !== null" x-cloak class="mt-1.5 flex items-center gap-1.5 text-xs">
+                            {{-- Loading spinner --}}
+                            <template x-if="barcodeStatus === 'loading'">
+                                <span class="flex items-center gap-1.5 text-gray-500">
+                                    <svg class="size-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                    {{ __('Looking up barcode…') }}
+                                </span>
+                            </template>
+                            {{-- Found --}}
+                            <template x-if="barcodeStatus === 'found'">
+                                <span class="flex items-center gap-1 text-green-700 dark:text-green-400">
+                                    <svg class="size-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg>
+                                    <span x-text="barcodeMsg"></span>
+                                </span>
+                            </template>
+                            {{-- Not found --}}
+                            <template x-if="barcodeStatus === 'notfound'">
+                                <span class="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                                    <svg class="size-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                                    <span x-text="barcodeMsg"></span>
+                                </span>
+                            </template>
+                            {{-- Error --}}
+                            <template x-if="barcodeStatus === 'error'">
+                                <span class="flex items-center gap-1 text-red-600 dark:text-red-400">
+                                    <svg class="size-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" /></svg>
+                                    <span x-text="barcodeMsg"></span>
+                                </span>
+                            </template>
+                        </div>
+
+                        <p class="mt-1 text-xs text-gray-400">{{ __('Optional. USB scanner auto-triggers lookup. Must be unique if set.') }}</p>
+                    </div>
                 </div>
                 <x-ui.textarea name="description" :label="__('Description')" :value="$product->description" rows="4" maxlength="2000" />
             </div>
