@@ -1,8 +1,8 @@
 {
-  "name": "pos-desktop",
+  "name": "sahulatpos-desktop",
   "version": "1.0.1",
-  "description": "POS Desktop Application",
-  "author": "POS",
+  "description": "SahulatPOS Desktop Application",
+  "author": "SahulatPOS",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -23,11 +23,11 @@
     "electron-builder": "^25.0.0"
   },
   "build": {
-    "appId": "com.pos.app",
-    "productName": "POS",
-    "copyright": "Copyright © 2026",
+    "appId": "com.sahulatpos.app",
+    "productName": "SahulatPOS",
+    "copyright": "Copyright © 2026 SahulatPOS",
     "directories": {
-      "output": "../dist_new"
+      "output": "../dist_sahulatpos"
     },
     "asarUnpack": [
       "node_modules/pdf-to-printer/dist/**"
@@ -63,7 +63,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "POS",
+      "shortcutName": "SahulatPOS",
       "deleteAppDataOnUninstall": false
     },
     "afterPack": "./afterPack.js",
@@ -80,6 +80,7 @@
           "!tests/**",
           "!dist/**",
           "!dist_new/**",
+          "!dist_sahulatpos/**",
           "!.env",
           "!.env.*"
         ]

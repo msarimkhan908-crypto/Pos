@@ -26,7 +26,19 @@ class LicenseController extends Controller
             'owner_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:191', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'machine_id' => ['nullable', 'string', 'max:64'],
         ]);
+
+        // Block if this machine already has a trial (even under a different email)
+        if (! empty($data['machine_id'])) {
+            $existing = Organization::where('machine_id', $data['machine_id'])->first();
+            if ($existing) {
+                return response()->json([
+                    'error' => 'device_already_registered',
+                    'message' => 'This device already has a trial account. Your trial may have expired — please purchase a license to continue.',
+                ], 409);
+            }
+        }
 
         $organization = DB::transaction(function () use ($data): Organization {
             $slug = Str::slug($data['business_name']);
@@ -44,6 +56,7 @@ class LicenseController extends Controller
                 'plan' => 'trial',
                 'status' => 'trial',
                 'trial_ends_at' => now()->addDays(14)->toDateString(),
+                'machine_id' => $data['machine_id'] ?? null,
             ]);
 
             $password = Str::random(12);
@@ -87,6 +100,20 @@ class LicenseController extends Controller
 
         if (! $org) {
             return response()->json(['error' => 'License key not found.'], 404);
+        }
+
+        // Validate machine_id if org has one locked in
+        $requestMachineId = $request->query('machine_id');
+        if ($org->machine_id && $requestMachineId && $org->machine_id !== $requestMachineId) {
+            return response()->json([
+                'error' => 'machine_mismatch',
+                'message' => 'This license is registered to a different device. Contact support if you changed hardware.',
+            ], 403);
+        }
+
+        // Lock machine_id on first status check (if org has none yet)
+        if (! $org->machine_id && $requestMachineId) {
+            $org->update(['machine_id' => $requestMachineId]);
         }
 
         $isActive = $org->isActive();

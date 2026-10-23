@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const path   = require('path');
 const net    = require('net');
 const http   = require('http');
+const https  = require('https');
+const os     = require('os');
 const fs     = require('fs');
 
 // In dev: ../  |  In production: resources/laravel
@@ -13,10 +15,14 @@ const LARAVEL_ROOT = IS_PACKAGED
   : path.join(__dirname, '..');
 
 // All writable state lives in userData — survives app updates and uninstall.
-const USER_DATA   = app.getPath('userData');
-const DB_PATH     = path.join(USER_DATA, 'database.sqlite');
-const CREDS_PATH  = path.join(USER_DATA, 'first_run_credentials.json');
-const KEY_PATH    = path.join(USER_DATA, 'app-key.json');
+const USER_DATA        = app.getPath('userData');
+const DB_PATH          = path.join(USER_DATA, 'database.sqlite');
+const CREDS_PATH       = path.join(USER_DATA, 'first_run_credentials.json');
+const KEY_PATH         = path.join(USER_DATA, 'app-key.json');
+const MACHINE_ID_PATH  = path.join(USER_DATA, 'machine-id.json');
+const LICENSE_KEY_PATH = path.join(USER_DATA, 'license.json');
+
+const LICENSE_SERVER = 'sahulatpos.fly.dev';
 
 // Derived paths inside userData/storage (matches Laravel's expected layout)
 const STORAGE     = path.join(USER_DATA, 'storage');
@@ -128,6 +134,95 @@ function ensureAppKey() {
   if (readAppKey()) return;
   const key = 'base64:' + crypto.randomBytes(32).toString('base64');
   fs.writeFileSync(KEY_PATH, JSON.stringify({ key }), 'utf8');
+}
+
+// ── Machine ID & License ──────────────────────────────────────────────────────
+
+function getMachineId() {
+  try {
+    if (fs.existsSync(MACHINE_ID_PATH)) {
+      const d = JSON.parse(fs.readFileSync(MACHINE_ID_PATH, 'utf8'));
+      if (d.id) return d.id;
+    }
+  } catch {}
+
+  const cpus = os.cpus();
+  const raw = [os.hostname(), cpus[0]?.model ?? '', os.platform(), os.arch(), String(os.totalmem())].join('|');
+  const id  = crypto.createHash('sha256').update(raw).digest('hex');
+  try { fs.writeFileSync(MACHINE_ID_PATH, JSON.stringify({ id }), 'utf8'); } catch {}
+  return id;
+}
+
+function readStoredLicense() {
+  try {
+    if (fs.existsSync(LICENSE_KEY_PATH)) {
+      return JSON.parse(fs.readFileSync(LICENSE_KEY_PATH, 'utf8'));
+    }
+  } catch {}
+  return null;
+}
+
+function storeLicense(data) {
+  fs.writeFileSync(LICENSE_KEY_PATH, JSON.stringify(data), 'utf8');
+}
+
+/** POST /api/license/register on the cloud server. Returns { ok, data, message }. */
+function cloudRegister(payload) {
+  return new Promise((resolve) => {
+    const body = JSON.stringify(payload);
+    const req  = https.request(
+      { hostname: LICENSE_SERVER, path: '/api/license/register', method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body), 'Accept': 'application/json' },
+        timeout: 20_000 },
+      (res) => {
+        let raw = '';
+        res.on('data', (c) => { raw += c; });
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(raw);
+            if (res.statusCode === 201) {
+              resolve({ ok: true, data });
+            } else {
+              resolve({ ok: false, message: data.message || data.error || `Server error ${res.statusCode}` });
+            }
+          } catch { resolve({ ok: false, message: 'Invalid server response.' }); }
+        });
+      }
+    );
+    req.on('error', () => resolve({ ok: false, message: 'Could not reach the activation server. Check your internet connection.' }));
+    req.on('timeout', () => { req.destroy(); resolve({ ok: false, message: 'Connection timed out. Check your internet connection.' }); });
+    req.write(body);
+    req.end();
+  });
+}
+
+/** GET /api/license/status?key=X&machine_id=Y. Returns { ok, status, daysRemaining, message } */
+function cloudStatus(licenseKey, machineId) {
+  return new Promise((resolve) => {
+    const qs  = `key=${encodeURIComponent(licenseKey)}&machine_id=${encodeURIComponent(machineId)}`;
+    const req = https.request(
+      { hostname: LICENSE_SERVER, path: `/api/license/status?${qs}`, method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        timeout: 15_000 },
+      (res) => {
+        let raw = '';
+        res.on('data', (c) => { raw += c; });
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(raw);
+            if (res.statusCode === 403) {
+              resolve({ ok: false, blocked: true, message: data.message || 'License error.' });
+            } else {
+              resolve({ ok: true, status: data.status, daysRemaining: data.days_remaining, message: data.message });
+            }
+          } catch { resolve({ ok: false, message: 'Invalid server response.' }); }
+        });
+      }
+    );
+    req.on('error', () => resolve({ ok: null, message: 'offline' })); // offline → allow
+    req.on('timeout', () => { req.destroy(); resolve({ ok: null, message: 'offline' }); });
+    req.end();
+  });
 }
 
 /**
@@ -485,6 +580,91 @@ function startPhpServer(port) {
   return php;
 }
 
+// ── License registration window ───────────────────────────────────────────────
+
+function createRegisterWindow() {
+  return new Promise((resolve, reject) => {
+    const win = new BrowserWindow({
+      width: 520, height: 620, resizable: false, center: true,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload-license.js'),
+        nodeIntegration: false, contextIsolation: true,
+      },
+      title: 'SahulatPOS — Activate',
+      show: false,
+    });
+
+    win.loadFile(path.join(__dirname, 'register.html'));
+    win.once('ready-to-show', () => win.show());
+
+    ipcMain.once('license-registered', (event, success) => {
+      win.close();
+      if (success) resolve();
+      else reject(new Error('License registration cancelled or failed.'));
+    });
+
+    win.on('closed', () => {
+      // User closed without registering
+      try { reject(new Error('Registration window closed.')); } catch {}
+    });
+  });
+}
+
+/**
+ * Check or register the desktop license.
+ * Returns true if the app can proceed, false if it must quit.
+ */
+async function checkLicense() {
+  const machineId = getMachineId();
+  const stored    = readStoredLicense();
+
+  if (stored?.license_key) {
+    // Validate existing license with cloud
+    const check = await cloudStatus(stored.license_key, machineId);
+
+    if (check.ok === null) {
+      // Offline — allow with a silent pass
+      return true;
+    }
+
+    if (check.blocked) {
+      await dialog.showMessageBox({
+        type: 'error', title: 'License Error',
+        message: 'License device mismatch',
+        detail: check.message + '\n\nIf you moved to a new computer, contact support at sahulatpos.com.',
+        buttons: ['Quit'],
+      });
+      return false;
+    }
+
+    if (!check.ok || check.status === 'expired' || check.status === 'suspended') {
+      const choice = await dialog.showMessageBox({
+        type: 'warning', title: 'Trial Expired',
+        message: 'Your SahulatPOS trial has expired.',
+        detail: 'Purchase a license at sahulatpos.com to continue using SahulatPOS.',
+        buttons: ['Quit', 'Open sahulatpos.com'],
+      });
+      if (choice.response === 1) shell.openExternal('https://sahulatpos.com');
+      return false;
+    }
+
+    // Valid — update cached status
+    try {
+      storeLicense({ ...stored, status: check.status, days_remaining: check.daysRemaining, last_validated: new Date().toISOString() });
+    } catch {}
+    return true;
+  }
+
+  // No license — show registration window
+  try {
+    await createRegisterWindow();
+    return true;
+  } catch {
+    app.quit();
+    return false;
+  }
+}
+
 // ── Loading window ────────────────────────────────────────────────────────────
 
 function createLoadingWindow() {
@@ -559,6 +739,15 @@ function createTray() {
 }
 
 // ── IPC ───────────────────────────────────────────────────────────────────────
+
+ipcMain.handle('license-register', async (event, payload) => {
+  const machineId = getMachineId();
+  const result = await cloudRegister({ ...payload, machine_id: machineId });
+  if (result.ok) {
+    storeLicense({ license_key: result.data.license_key, machine_id: machineId, registered_at: new Date().toISOString() });
+  }
+  return result;
+});
 
 ipcMain.handle('sync-now', () => triggerSync());
 
@@ -961,6 +1150,10 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 app.whenReady().then(async () => {
+  // Step 0: License check (before showing any UI)
+  const licenseOk = await checkLicense();
+  if (!licenseOk) { app.quit(); return; }
+
   const loadingWin = createLoadingWindow();
 
   try {
