@@ -584,6 +584,7 @@
             top: -50%; left: -50%;
             width: 200%; height: 200%;
             background: radial-gradient(circle, rgba(34,197,94,0.05) 0%, transparent 60%);
+            pointer-events: none;
         }
 
         .pricing-popular {
