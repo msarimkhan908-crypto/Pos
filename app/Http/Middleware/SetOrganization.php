@@ -23,9 +23,11 @@ class SetOrganization
                     return response()->json(['message' => 'Account activation pending.'], 403);
                 }
 
-                if (! $request->routeIs('payment.pending', 'logout')) {
+                if (! $request->routeIs('payment.pending', 'account.status', 'logout')) {
                     return redirect()->route('payment.pending');
                 }
+
+                return $next($request);
             }
 
             // Block suspended / expired organizations
