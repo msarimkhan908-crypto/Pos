@@ -842,11 +842,11 @@
         <a href="#pricing" class="nav-link">Pricing</a>
         @if (Route::has('login'))
             @auth
-                <a href="{{ url('/dashboard') }}" class="nav-link nav-cta">Dashboard</a>
+                <a href="/dashboard" class="nav-link nav-cta">Dashboard</a>
             @else
-                <a href="{{ route('login') }}" class="nav-link">Log in</a>
+                <a href="/login" class="nav-link">Log in</a>
                 @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="nav-link nav-cta">Get Started Free</a>
+                    <a href="/register" class="nav-link nav-cta">Get Started Free</a>
                 @endif
             @endauth
         @endif
@@ -884,7 +884,7 @@
 
         <div class="hero-actions">
             @if (Route::has('register'))
-                <a href="{{ route('register') }}" class="btn-primary">
+                <a href="/register" class="btn-primary">
                     Start Free 14-Day Trial →
                 </a>
             @endif
@@ -1036,7 +1036,7 @@
                     <li>Basic reports</li>
                     <li>Receipt printing</li>
                 </ul>
-                <a href="{{ route('register') }}" class="btn-plan btn-plan-outline">Start Free Trial</a>
+                <a href="/register" class="btn-plan btn-plan-outline">Start Free Trial</a>
             </div>
 
             <div class="pricing-card featured">
@@ -1054,7 +1054,7 @@
                     <li>Desktop + Web app</li>
                     <li>Priority support</li>
                 </ul>
-                <a href="{{ route('register') }}" class="btn-plan btn-plan-green">Get Started</a>
+                <a href="/register" class="btn-plan btn-plan-green">Get Started</a>
             </div>
 
             <div class="pricing-card" style="border-color:rgba(14,165,233,0.25);">
@@ -1070,7 +1070,7 @@
                     <li>Dedicated support</li>
                     <li>Early access to new features</li>
                 </ul>
-                <a href="{{ route('register') }}" class="btn-plan btn-plan-outline" style="border-color:rgba(14,165,233,0.4);color:#7dd3fc;">Get Annual Plan</a>
+                <a href="/register" class="btn-plan btn-plan-outline" style="border-color:rgba(14,165,233,0.4);color:#7dd3fc;">Get Annual Plan</a>
             </div>
         </div>
     </div>
@@ -1084,10 +1084,10 @@
         <p class="cta-sub">Join hundreds of Pakistani businesses already using SahulatPOS. Start your free 14-day trial — no credit card required.</p>
         <div class="hero-actions">
             @if (Route::has('register'))
-                <a href="{{ route('register') }}" class="btn-primary">Create Free Account →</a>
+                <a href="/register" class="btn-primary">Create Free Account →</a>
             @endif
             @if (Route::has('login'))
-                <a href="{{ route('login') }}" class="btn-secondary">Sign In</a>
+                <a href="/login" class="btn-secondary">Sign In</a>
             @endif
         </div>
         <p class="cta-note">✓ 14-day free trial &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Cancel anytime</p>
@@ -1107,10 +1107,10 @@
                 <a href="#how-it-works">How It Works</a>
                 <a href="#pricing">Pricing</a>
                 @if (Route::has('login'))
-                    <a href="{{ route('login') }}">Login</a>
+                    <a href="/login">Login</a>
                 @endif
                 @if (Route::has('register'))
-                    <a href="{{ route('register') }}">Register</a>
+                    <a href="/register">Register</a>
                 @endif
             </div>
         </div>
