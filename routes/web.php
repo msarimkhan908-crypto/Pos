@@ -31,9 +31,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : view('landing');
-})->name('home');
+Route::get('/', fn () => view('landing'))->name('home');
 
 // Subscription expired screen (authenticated but blocked)
 Route::get('/subscription/expired', fn () => view('subscription.expired'))

@@ -23,7 +23,7 @@ class SetOrganization
                     return response()->json(['message' => 'Account activation pending.'], 403);
                 }
 
-                if (! $request->routeIs('payment.pending', 'account.status', 'logout')) {
+                if (! $request->routeIs('home', 'payment.pending', 'account.status', 'logout')) {
                     return redirect()->route('payment.pending');
                 }
 
@@ -36,7 +36,11 @@ class SetOrganization
                     return response()->json(['message' => 'Subscription expired.'], 403);
                 }
 
-                return redirect()->route('subscription.expired');
+                if (! $request->routeIs('home', 'subscription.expired', 'logout')) {
+                    return redirect()->route('subscription.expired');
+                }
+
+                return $next($request);
             }
 
             // Share the current org everywhere (views, services, etc.)
