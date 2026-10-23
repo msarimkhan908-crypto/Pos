@@ -17,7 +17,18 @@ class SetOrganization
         if ($user && $user->organization_id) {
             $organization = $user->organization;
 
-            // Block suspended organizations
+            // Payment submitted but not yet activated — show pending page
+            if ($organization && $organization->status === 'payment_submitted') {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Account activation pending.'], 403);
+                }
+
+                if (! $request->routeIs('payment.pending', 'logout')) {
+                    return redirect()->route('payment.pending');
+                }
+            }
+
+            // Block suspended / expired organizations
             if ($organization && ! $organization->isActive()) {
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Subscription expired.'], 403);

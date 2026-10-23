@@ -40,6 +40,11 @@ Route::get('/subscription/expired', fn () => view('subscription.expired'))
     ->middleware('auth')
     ->name('subscription.expired');
 
+// Payment submitted — waiting for admin activation
+Route::get('/payment/pending', fn () => view('subscription.payment-pending'))
+    ->middleware('auth')
+    ->name('payment.pending');
+
 // Super-admin panel (role: super-admin)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
