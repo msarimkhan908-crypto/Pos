@@ -48,13 +48,15 @@ class LicenseController extends Controller
 
             $password = Str::random(12);
 
-            User::create([
+            $user = User::create([
                 'name' => $data['owner_name'],
                 'email' => $data['email'],
                 'password' => Hash::make($password),
                 'organization_id' => $org->id,
                 'is_org_owner' => true,
             ]);
+
+            $user->assignRole('Admin');
 
             return $org;
         });

@@ -62,6 +62,8 @@ class RegisteredUserController extends Controller
                 'is_org_owner' => true,
             ]);
 
+            $user->assignRole('Admin');
+
             event(new Registered($user));
 
             Auth::login($user);
