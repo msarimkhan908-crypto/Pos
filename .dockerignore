@@ -2,6 +2,7 @@ node_modules
 electron
 dist
 dist_new
+dist_sahulatpos
 .git
 .env
 .env.*
