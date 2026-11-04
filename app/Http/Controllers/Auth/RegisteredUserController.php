@@ -77,7 +77,7 @@ class RegisteredUserController extends Controller
                 'plan' => 'trial',
                 'pending_plan' => $isPaidPlan ? $plan : null,
                 'status' => $isPaidPlan ? 'payment_submitted' : 'trial',
-                'trial_ends_at' => $isPaidPlan ? null : now()->addDays(14),
+                'trial_ends_at' => $isPaidPlan ? null : now()->addDays(4),
                 'payment_proof_path' => $proofPath,
             ]);
 

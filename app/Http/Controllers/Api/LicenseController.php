@@ -55,7 +55,7 @@ class LicenseController extends Controller
                 'phone' => $data['phone'] ?? null,
                 'plan' => 'trial',
                 'status' => 'trial',
-                'trial_ends_at' => now()->addDays(14)->toDateString(),
+                'trial_ends_at' => now()->addDays(4)->toDateString(),
                 'machine_id' => $data['machine_id'] ?? null,
             ]);
 
@@ -79,7 +79,7 @@ class LicenseController extends Controller
             'status' => 'trial',
             'trial_ends_at' => $organization->trial_ends_at->toDateString(),
             'days_remaining' => $organization->daysRemaining(),
-            'message' => 'Trial started! You have 14 days to try SahulatPOS.',
+            'message' => 'Trial started! You have 4 days to try SahulatPOS.',
         ], 201);
     }
 

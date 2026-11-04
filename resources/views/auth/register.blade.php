@@ -297,7 +297,7 @@
             @if($plan === 'trial')
                 <div class="plan-badge">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                    14-day free trial — no card needed
+                    4-day free trial — no card needed
                 </div>
             @elseif($plan === 'monthly')
                 <div class="plan-badge">
@@ -367,7 +367,7 @@
                 @if($plan === 'trial')
                     <div class="plan-pill trial">Free Trial</div>
                     <h1>Start your free trial</h1>
-                    <p>14 days free — no credit card required</p>
+                    <p>4 days free — no credit card required</p>
                 @elseif($plan === 'monthly')
                     <div class="plan-pill monthly">Monthly Plan</div>
                     <h1>Activate Monthly Plan</h1>
@@ -581,7 +581,7 @@
                 @else
                     <div class="trial-note" style="display:flex;align-items:center;gap:.5rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.6rem .875rem;font-size:.8rem;color:#166534;margin-bottom:1.25rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:14px;height:14px;flex-shrink:0;color:#16a34a"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                        14-day free trial · No credit card required · Cancel anytime
+                        4-day free trial · No credit card required · Cancel anytime
                     </div>
                 @endif
 

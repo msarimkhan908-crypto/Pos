@@ -1035,7 +1035,7 @@
             <div class="pricing-card">
                 <div class="pricing-name">Free Trial</div>
                 <div class="pricing-price" style="color:#f1f5f9;">Free</div>
-                <div class="pricing-period">14 days · no credit card needed</div>
+                <div class="pricing-period">4 days · no credit card needed</div>
                 <ul class="pricing-features">
                     <li>Unlimited sales</li>
                     <li>Up to 100 products</li>
@@ -1088,7 +1088,7 @@
     <div class="cta-inner fade-in">
         <span class="cta-urdu">آج ہی شروع کریں</span>
         <h2 class="cta-title">Ready to grow your business?</h2>
-        <p class="cta-sub">Join hundreds of Pakistani businesses already using SahulatPOS. Start your free 14-day trial — no credit card required.</p>
+        <p class="cta-sub">Join hundreds of Pakistani businesses already using SahulatPOS. Start your free 4-day trial — no credit card required.</p>
         <div class="hero-actions">
             @if (Route::has('register'))
                 <a href="/register" class="btn-primary">Create Free Account →</a>
@@ -1104,7 +1104,7 @@
                 Download for Windows
             </a>
         </div>
-        <p class="cta-note">✓ 14-day free trial &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Windows desktop app available</p>
+        <p class="cta-note">✓ 4-day free trial &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Windows desktop app available</p>
     </div>
 </section>
 
