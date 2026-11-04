@@ -444,6 +444,25 @@
             line-height: 1.7;
         }
 
+        /* ─── VIDEO DEMO ─── */
+        .video-demo { background: #020617; padding: 5rem 1.5rem; }
+        .video-demo .features-header { text-align: center; margin-bottom: 2.5rem; }
+        .video-wrapper {
+            position: relative;
+            max-width: 860px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(34,197,94,0.2);
+            box-shadow: 0 0 60px rgba(34,197,94,0.08), 0 25px 50px rgba(0,0,0,0.6);
+        }
+        .video-wrapper video {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #0f172a;
+        }
+
         /* ─── FEATURES ─── */
         .features { background: #0f172a; }
 
@@ -948,6 +967,24 @@
         <span>🇵🇰 Made for Pakistan</span><span class="sep">•</span>
     </div>
 </div>
+
+<!-- VIDEO DEMO -->
+<section class="video-demo">
+    <div class="section-inner">
+        <div class="features-header fade-in">
+            <div class="section-tag">See It In Action</div>
+            <h2 class="section-title">Watch <span class="green">SahulatPOS</span> in action</h2>
+            <p class="section-sub" style="margin:0 auto;">See how fast and easy it is to manage your business with SahulatPOS.</p>
+        </div>
+        <div class="video-wrapper fade-in">
+            <video controls playsinline preload="metadata"
+                poster=""
+                src="https://github.com/msarimkhan908-crypto/Pos/releases/download/v1.0.1/video_hd_no_watermark.mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+</section>
 
 <!-- FEATURES -->
 <section class="features" id="features">
