@@ -886,7 +886,7 @@
         <div class="hero-actions">
             @if (Route::has('register'))
                 <a href="/register" class="btn-primary">
-                    Start Free 14-Day Trial →
+                    Start Free 4-Day Trial →
                 </a>
             @endif
             <a href="https://github.com/msarimkhan908-crypto/Pos/releases/download/v1.0.1/SahulatPOS.Setup.1.0.1.exe"
@@ -912,7 +912,7 @@
                 <span class="hero-stat-label">% Uptime</span>
             </div>
             <div class="hero-stat">
-                <span class="hero-stat-num" data-count="14">0</span>
+                <span class="hero-stat-num" data-count="4">0</span>
                 <span class="hero-stat-label">Day Free Trial</span>
             </div>
         </div>
