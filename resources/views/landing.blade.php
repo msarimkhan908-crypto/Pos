@@ -804,11 +804,63 @@
         }
 
         /* ─── RESPONSIVE ─── */
-        @media (max-width: 640px) {
-            nav { padding: 0 1rem; }
+        @media (max-width: 768px) {
+            /* Navbar */
+            nav { padding: 0 1rem; height: 60px; }
             .nav-links .nav-link:not(.nav-cta) { display: none; }
-            .hero-stats { gap: 1.5rem; }
-            .footer-top { flex-direction: column; align-items: flex-start; }
+            .nav-logo-en { font-size: 1rem; }
+
+            /* Hero */
+            .hero { padding: 5rem 1.25rem 3rem; min-height: auto; }
+            .hero-title { font-size: clamp(2rem, 10vw, 3.2rem); }
+            .hero-desc { font-size: 0.95rem; }
+            .hero-actions { flex-direction: column; align-items: center; gap: 0.75rem; }
+            .btn-primary, .btn-secondary { width: 100%; max-width: 320px; text-align: center; padding: 0.85rem 1.5rem; }
+            .hero-stats { gap: 1.25rem; flex-wrap: wrap; justify-content: center; margin-top: 2.5rem; }
+            .hero-stat-num { font-size: 1.4rem; }
+            .orb-1 { width: 280px; height: 280px; }
+            .orb-2 { width: 220px; height: 220px; }
+            .orb-3 { display: none; }
+
+            /* Sections */
+            section { padding: 3.5rem 1.25rem; }
+            .section-title { font-size: clamp(1.5rem, 6vw, 2rem); }
+            .section-sub { font-size: 0.95rem; }
+
+            /* Video */
+            .video-demo { padding: 3rem 1rem; }
+            .video-wrapper { border-radius: 10px; }
+
+            /* Features */
+            .features-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .feature-card { padding: 1.5rem; }
+
+            /* How it works */
+            .steps-row { grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem; }
+
+            /* Pricing */
+            .pricing-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+            .pricing-card { padding: 2rem 1.5rem; }
+            .pricing-price { font-size: 2rem; }
+
+            /* CTA */
+            .cta-inner { padding: 0 0.5rem; }
+            .cta-urdu { font-size: 1.2rem; }
+            .cta-note { font-size: 0.75rem; }
+
+            /* Footer */
+            .footer-top { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .footer-links { gap: 1rem; }
+        }
+
+        @media (max-width: 400px) {
+            .hero-title { font-size: 1.9rem; }
+            .hero-badge { font-size: 0.7rem; padding: 0.3rem 0.75rem; }
+            .hero-urdu { font-size: 1.3rem; }
+            .hero-stats { gap: 1rem; }
+            .hero-stat-num { font-size: 1.25rem; }
+            .hero-stat-label { font-size: 0.65rem; }
+            .btn-primary, .btn-secondary { font-size: 0.9rem; }
         }
 
         /* marquee ticker */
