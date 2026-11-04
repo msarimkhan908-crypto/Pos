@@ -67,7 +67,7 @@ class RegisteredUserController extends Controller
 
             $proofPath = null;
             if ($isPaidPlan && $request->hasFile('payment_proof')) {
-                $proofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+                $proofPath = $request->file('payment_proof')->store('payment-proofs', 'local');
             }
 
             $organization = Organization::create([

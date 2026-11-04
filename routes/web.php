@@ -29,7 +29,9 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StorageController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
+use App\Models\Organization;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', fn () => view('landing'))->name('home');
 
@@ -46,11 +48,29 @@ Route::get('/payment/pending', fn () => view('subscription.payment-pending'))
 // Polled by the pending page JS to detect when admin activates the account
 Route::get('/account/status', function () {
     $org = auth()->user()?->organization;
+
     return response()->json([
-        'status'   => $org?->status,
+        'status' => $org?->status,
         'is_active' => $org?->isActive() ?? false,
     ]);
 })->middleware('auth')->name('account.status');
+
+// Serve payment proof files — admin only
+Route::get('/admin/payment-proof/{organization}', function (Organization $organization) {
+    $path = $organization->payment_proof_path;
+    if (! $path || ! Storage::disk('local')->exists($path)) {
+        abort(404);
+    }
+    $content = Storage::disk('local')->get($path);
+    $mime = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+        'jpg', 'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'pdf' => 'application/pdf',
+        default => 'application/octet-stream',
+    };
+
+    return response($content, 200, ['Content-Type' => $mime]);
+})->middleware(['auth', 'role:Super Admin'])->name('admin.payment-proof');
 
 // Super-admin panel (role: super-admin)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:Super Admin'])->group(function () {

@@ -32,7 +32,7 @@
             {{-- Proof image / file --}}
             @php
                 $proofExt = pathinfo($organization->payment_proof_path, PATHINFO_EXTENSION);
-                $proofUrl = asset('storage/' . $organization->payment_proof_path);
+                $proofUrl = route('admin.payment-proof', $organization);
             @endphp
 
             @if(in_array(strtolower($proofExt), ['jpg','jpeg','png']))
