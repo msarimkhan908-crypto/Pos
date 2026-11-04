@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
 
         $destination = Auth::user()->hasRole('Super Admin')
             ? route('admin.dashboard', absolute: false)
-            : route('dashboard', absolute: false);
+            : route('pos.index', absolute: false);
 
         return redirect()->intended($destination);
     }

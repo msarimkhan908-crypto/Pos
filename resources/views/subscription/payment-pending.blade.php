@@ -272,7 +272,7 @@
 
     <script>
         var CHECK_URL = '{{ route('account.status') }}';
-        var DASHBOARD_URL = '/dashboard';
+        var DASHBOARD_URL = '/pos';
         var countdown = 30;
 
         function updateText() {
