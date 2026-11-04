@@ -13,6 +13,7 @@ Route::middleware('auth')->get('barcode-lookup', BarcodeLookupController::class)
 Route::prefix('license')->group(function () {
     Route::post('register', [LicenseController::class, 'register'])->name('api.license.register');
     Route::get('status', [LicenseController::class, 'status'])->name('api.license.status');
+    Route::post('login', [LicenseController::class, 'login'])->name('api.license.login');
 });
 
 // Data sync — requires either the global sync token or a valid license key

@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class LicenseController extends Controller
@@ -127,6 +128,91 @@ class LicenseController extends Controller
         };
 
         return response()->json([
+            'status' => $status,
+            'days_remaining' => max(0, $days),
+            'plan' => $org->plan,
+            'business_name' => $org->name,
+            'message' => $this->statusMessage($status, $days),
+        ]);
+    }
+
+    /**
+     * POST /api/license/login
+     *
+     * Lets a web-registered (or existing) user log into the desktop app
+     * using their email and password instead of a trial registration flow.
+     */
+    public function login(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+            'machine_id' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $throttleKey = 'license-login:'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            return response()->json([
+                'error' => 'too_many_attempts',
+                'message' => 'Too many login attempts. Please try again in a minute.',
+            ], 429);
+        }
+
+        $user = User::where('email', $data['email'])->first();
+
+        if (! $user || ! Hash::check($data['password'], $user->password)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            return response()->json([
+                'error' => 'invalid_credentials',
+                'message' => 'Invalid email or password.',
+            ], 401);
+        }
+
+        RateLimiter::clear($throttleKey);
+
+        $org = $user->organization;
+
+        if (! $org) {
+            return response()->json([
+                'error' => 'no_organization',
+                'message' => 'This account is not linked to any organization.',
+            ], 403);
+        }
+
+        if ($org->status === 'payment_submitted') {
+            return response()->json([
+                'error' => 'pending_activation',
+                'message' => 'Your account is pending admin activation. Please wait.',
+            ], 403);
+        }
+
+        // Validate / lock machine_id
+        $machineId = $data['machine_id'] ?? null;
+        if ($org->machine_id && $machineId && $org->machine_id !== $machineId) {
+            return response()->json([
+                'error' => 'machine_mismatch',
+                'message' => 'This license is registered to a different device. Contact support if you changed hardware.',
+            ], 403);
+        }
+
+        if (! $org->machine_id && $machineId) {
+            $org->update(['machine_id' => $machineId]);
+        }
+
+        $isActive = $org->isActive();
+        $days = $org->daysRemaining();
+
+        $status = match ($org->status) {
+            'trial' => $isActive ? 'trial' : 'expired',
+            'active' => $isActive ? 'active' : 'expired',
+            'suspended' => 'suspended',
+            default => 'expired',
+        };
+
+        return response()->json([
+            'license_key' => $org->license_key,
             'status' => $status,
             'days_remaining' => max(0, $days),
             'plan' => $org->plan,
