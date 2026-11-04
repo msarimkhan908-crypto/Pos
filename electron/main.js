@@ -728,7 +728,7 @@ function createTray() {
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'Open POS', click: () => {
         if (mainWindow) mainWindow.show();
-        else createWindow(`http://127.0.0.1:${serverPort}`);
+        else createWindow(`http://127.0.0.1:${serverPort}/dashboard`);
       }},
       { label: 'Sync now', click: () => triggerSync() },
       { type: 'separator' },
@@ -1175,11 +1175,13 @@ app.whenReady().then(async () => {
     serverPort = await findFreePort(8765);
     phpProcess = startPhpServer(serverPort);
 
-    const url = `http://127.0.0.1:${serverPort}`;
-    await waitForServer(url, phpProcess);
+    const baseUrl = `http://127.0.0.1:${serverPort}`;
+    await waitForServer(baseUrl, phpProcess);
 
     // Step 4: Create window first (needed to query printers)
-    createWindow(url);
+    // Open dashboard directly — Laravel redirects to /login if not authenticated,
+    // then back to /dashboard after login. This skips the landing page for desktop users.
+    createWindow(`${baseUrl}/dashboard`);
     loadingWin.destroy();
     createTray();
 

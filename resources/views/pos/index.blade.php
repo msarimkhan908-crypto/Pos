@@ -20,6 +20,7 @@
         'canSaveCustomer' => auth()->user()->can('customers.create'),
         'print' => ['receipt' => (bool) settings('print.auto_receipt'), 'kot' => (bool) settings('print.auto_kot'), 'layout' => settings('print.layout')],
         'canEdit' => auth()->user()->can('sales.edit'),
+        'isRestaurant' => app(\App\Models\Organization::class)?->isRestaurant() ?? false,
         'printers' => ['receipt' => settings('receipt.desktop_printer'), 'kot' => settings('receipt.kot_printer')],
         'messages' => [
             'added' => __('added'),
@@ -206,8 +207,9 @@
                         </div>
 
                         <div class="flex items-center gap-1.5">
-                            <div class="grid flex-1 grid-cols-3 gap-0.5 rounded-lg bg-gray-100 p-0.5" role="radiogroup" aria-label="{{ __('Order type') }}">
-                                @foreach (\App\Enums\OrderType::options() as $value => $label)
+                            @php $orderTypes = \App\Enums\OrderType::optionsForBusiness(app(\App\Models\Organization::class)?->business_type ?? 'general'); @endphp
+                            <div class="grid flex-1 gap-0.5 rounded-lg bg-gray-100 p-0.5" style="grid-template-columns: repeat({{ count($orderTypes) }}, minmax(0, 1fr))" role="radiogroup" aria-label="{{ __('Order type') }}">
+                                @foreach ($orderTypes as $value => $label)
                                     <button type="button" role="radio" x-on:click="setOrderType('{{ $value }}')"
                                         x-bind:aria-checked="orderType === '{{ $value }}'"
                                         x-bind:class="orderType === '{{ $value }}' ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-900'"
