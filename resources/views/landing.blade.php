@@ -889,7 +889,13 @@
                     Start Free 14-Day Trial →
                 </a>
             @endif
-            <a href="#features" class="btn-secondary">See Features</a>
+            <a href="https://github.com/msarimkhan908-crypto/Pos/releases/download/v1.0.1/SahulatPOS.Setup.1.0.1.exe"
+               class="btn-secondary" download>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;display:inline;margin-right:6px;vertical-align:middle">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Download for Windows
+            </a>
         </div>
 
         <div class="hero-stats">
@@ -1090,8 +1096,15 @@
             @if (Route::has('login'))
                 <a href="/login" class="btn-secondary">Sign In</a>
             @endif
+            <a href="https://github.com/msarimkhan908-crypto/Pos/releases/download/v1.0.1/SahulatPOS.Setup.1.0.1.exe"
+               class="btn-secondary" download>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;display:inline;margin-right:6px;vertical-align:middle">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Download for Windows
+            </a>
         </div>
-        <p class="cta-note">✓ 14-day free trial &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Cancel anytime</p>
+        <p class="cta-note">✓ 14-day free trial &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Windows desktop app available</p>
     </div>
 </section>
 
